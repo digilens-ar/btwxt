@@ -4,16 +4,12 @@
 #pragma once
 
 // Standard
-#include <functional>
 #include <memory>
 #include <vector>
-
-#include <courier/courier.h>
 
 // btwxt
 #include "grid-axis.h"
 #include "grid-point-data.h"
-#include "messaging.h"
 
 namespace Btwxt {
 
@@ -34,49 +30,39 @@ class RegularGridInterpolator {
 
     explicit RegularGridInterpolator(
         const std::vector<std::vector<double>>& grid_axis_vectors,
-        std::string name = "Unnamed RegularGridInterpolator",
-        const std::shared_ptr<Courier::Courier>& courier = std::make_shared<BtwxtDefaultCourier>());
+        std::string name = "Unnamed RegularGridInterpolator");
 
     RegularGridInterpolator(
         const std::vector<std::vector<double>>& grid_axis_vectors,
         const std::vector<std::vector<double>>& grid_point_data_vectors,
-        std::string name = "Unnamed RegularGridInterpolator",
-        const std::shared_ptr<Courier::Courier>& courier = std::make_shared<BtwxtDefaultCourier>());
+        std::string name = "Unnamed RegularGridInterpolator");
 
     explicit RegularGridInterpolator(
         const std::vector<GridAxis>& grid_axes,
-        std::string name = "Unnamed RegularGridInterpolator",
-        const std::shared_ptr<Courier::Courier>& courier = std::make_shared<BtwxtDefaultCourier>());
+        std::string name = "Unnamed RegularGridInterpolator");
 
     RegularGridInterpolator(
         const std::vector<GridAxis>& grid_axes,
         const std::vector<std::vector<double>>& grid_point_data_vectors,
-        std::string name = "Unnamed RegularGridInterpolator",
-        const std::shared_ptr<Courier::Courier>& courier = std::make_shared<BtwxtDefaultCourier>());
+        std::string name = "Unnamed RegularGridInterpolator");
 
     RegularGridInterpolator(
         const std::vector<std::vector<double>>& grid_axis_vectors,
         const std::vector<GridPointDataSet>& grid_point_data_sets,
-        std::string name = "Unnamed RegularGridInterpolator",
-        const std::shared_ptr<Courier::Courier>& courier = std::make_shared<BtwxtDefaultCourier>());
+        std::string name = "Unnamed RegularGridInterpolator");
 
     RegularGridInterpolator(
         const std::vector<GridAxis>& grid_axes,
         const std::vector<GridPointDataSet>& grid_point_data_sets,
-        std::string name = "Unnamed RegularGridInterpolator",
-        const std::shared_ptr<Courier::Courier>& courier = std::make_shared<BtwxtDefaultCourier>());
+        std::string name = "Unnamed RegularGridInterpolator");
 
     ~RegularGridInterpolator();
 
     RegularGridInterpolator(const RegularGridInterpolator& source);
 
-    RegularGridInterpolator(const RegularGridInterpolator& source,
-                            const std::shared_ptr<Courier::Courier>& courier);
-
     RegularGridInterpolator& operator=(const RegularGridInterpolator& source);
 
-    std::size_t add_grid_point_data_set(const std::vector<double>& grid_point_data_vector,
-                                        const std::string& name = "");
+    std::size_t add_grid_point_data_set(const std::vector<double>& grid_point_data_vector);
 
     std::size_t add_grid_point_data_set(const GridPointDataSet& grid_point_data_set);
 
@@ -109,8 +95,6 @@ class RegularGridInterpolator {
 
     void normalize_grid_point_data_sets_at_target(const std::vector<double>& target,
                                                   double scalar = 1.0);
-
-    std::string write_data();
 
     // Get results
     void set_target(const std::vector<double>& target);
@@ -149,11 +133,6 @@ class RegularGridInterpolator {
     [[nodiscard]] const std::vector<TargetBoundsStatus>& get_target_bounds_status() const;
 
     void clear_target();
-
-    void set_courier(const std::shared_ptr<Courier::Courier>& courier,
-                     bool set_grid_axes_couriers = false);
-
-    std::shared_ptr<Courier::Courier> get_courier();
 
   private:
     std::unique_ptr<RegularGridInterpolatorImplementation> implementation;

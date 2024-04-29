@@ -13,8 +13,7 @@
 
 namespace Btwxt {
 
-std::vector<GridAxis> construct_grid_axes(const std::vector<std::vector<double>>& grid_axis_vectors,
-                                          const std::shared_ptr<Courier::Courier>& courier_in)
+std::vector<GridAxis> construct_grid_axes(const std::vector<std::vector<double>>& grid_axis_vectors)
 {
     std::vector<GridAxis> grid_axes;
     grid_axes.reserve(grid_axis_vectors.size());
@@ -22,21 +21,18 @@ std::vector<GridAxis> construct_grid_axes(const std::vector<std::vector<double>>
         grid_axes.emplace_back(axis,
                                InterpolationMethod::linear,
                                ExtrapolationMethod::constant,
-                               std::pair<double, double> {-DBL_MAX, DBL_MAX},
-                               fmt::format("Axis {}", grid_axes.size() + 1),
-                               courier_in);
+                               std::pair<double, double> {-DBL_MAX, DBL_MAX});
     }
     return grid_axes;
 }
 
-std::vector<GridPointDataSet>
-construct_grid_point_data_sets(const std::vector<std::vector<double>>& grid_point_data_vectors)
+std::vector<GridPointDataSet> construct_grid_point_data_sets(const std::vector<std::vector<double>>& grid_point_data_vectors)
 {
     std::vector<GridPointDataSet> grid_point_data_sets;
     grid_point_data_sets.reserve(grid_point_data_vectors.size());
     for (const auto& grid_point_data_set : grid_point_data_vectors) {
         grid_point_data_sets.emplace_back(
-            grid_point_data_set, fmt::format("Data Set {}", grid_point_data_sets.size() + 1));
+            grid_point_data_set);
     }
     return grid_point_data_sets;
 }
@@ -47,68 +43,56 @@ RegularGridInterpolator::RegularGridInterpolator() = default;
 
 RegularGridInterpolator::RegularGridInterpolator(
     const std::vector<std::vector<double>>& grid_axis_vectors,
-    std::string name,
-    const std::shared_ptr<Courier::Courier>& courier)
-    : RegularGridInterpolator(construct_grid_axes(grid_axis_vectors, courier),
+    std::string name)
+    : RegularGridInterpolator(construct_grid_axes(grid_axis_vectors),
                               std::vector<GridPointDataSet>(),
-                              std::move(name),
-                              courier)
+                              std::move(name))
 {
 }
 
 RegularGridInterpolator::RegularGridInterpolator(
     const std::vector<std::vector<double>>& grid_axis_vectors,
     const std::vector<std::vector<double>>& grid_point_data_vectors,
-    std::string name,
-    const std::shared_ptr<Courier::Courier>& courier)
-    : RegularGridInterpolator(construct_grid_axes(grid_axis_vectors, courier),
+    std::string name)
+    : RegularGridInterpolator(construct_grid_axes(grid_axis_vectors),
                               construct_grid_point_data_sets(grid_point_data_vectors),
-                              std::move(name),
-                              courier)
+                              std::move(name))
 {
 }
 
 RegularGridInterpolator::RegularGridInterpolator(const std::vector<GridAxis>& grid,
-                                                 std::string name,
-                                                 const std::shared_ptr<Courier::Courier>& courier)
+                                                 std::string name)
     : implementation(
-          std::make_unique<RegularGridInterpolatorImplementation>(grid, std::move(name), courier))
+          std::make_unique<RegularGridInterpolatorImplementation>(grid))
 {
 }
 
 RegularGridInterpolator::RegularGridInterpolator(
     const std::vector<GridAxis>& grid_axes,
     const std::vector<std::vector<double>>& grid_point_data_vectors,
-    std::string name,
-    const std::shared_ptr<Courier::Courier>& courier)
+    std::string name)
     : implementation(std::make_unique<RegularGridInterpolatorImplementation>(
           grid_axes,
-          construct_grid_point_data_sets(grid_point_data_vectors),
-          std::move(name),
-          courier))
+          construct_grid_point_data_sets(grid_point_data_vectors)))
 {
 }
 
 RegularGridInterpolator::RegularGridInterpolator(
     const std::vector<std::vector<double>>& grid_axis_vectors,
     const std::vector<GridPointDataSet>& grid_point_data_sets,
-    std::string name,
-    const std::shared_ptr<Courier::Courier>& courier)
+    std::string name)
     : implementation(std::make_unique<RegularGridInterpolatorImplementation>(
-          construct_grid_axes(grid_axis_vectors, courier),
-          grid_point_data_sets,
-          std::move(name),
-          courier))
+          construct_grid_axes(grid_axis_vectors),
+          grid_point_data_sets))
 {
 }
 
 RegularGridInterpolator::RegularGridInterpolator(
     const std::vector<GridAxis>& grid_axes,
     const std::vector<GridPointDataSet>& grid_point_data_sets,
-    std::string name,
-    const std::shared_ptr<Courier::Courier>& courier)
+    std::string name)
     : implementation(std::make_unique<RegularGridInterpolatorImplementation>(
-          grid_axes, grid_point_data_sets, std::move(name), courier))
+          grid_axes, grid_point_data_sets))
 {
 }
 
@@ -123,13 +107,6 @@ RegularGridInterpolator::RegularGridInterpolator(const RegularGridInterpolator& 
             : nullptr;
 }
 
-RegularGridInterpolator::RegularGridInterpolator(const RegularGridInterpolator& source,
-                                                 const std::shared_ptr<Courier::Courier>& courier)
-    : RegularGridInterpolator(source)
-{
-    this->implementation->set_courier(courier);
-}
-
 RegularGridInterpolator& RegularGridInterpolator::operator=(const RegularGridInterpolator& source)
 {
     implementation =
@@ -142,15 +119,9 @@ RegularGridInterpolator& RegularGridInterpolator::operator=(const RegularGridInt
 // Public manipulation methods
 
 std::size_t
-RegularGridInterpolator::add_grid_point_data_set(const std::vector<double>& grid_point_data_vector,
-                                                 const std::string& name)
+RegularGridInterpolator::add_grid_point_data_set(const std::vector<double>& grid_point_data_vector)
 {
-    std::string resolved_name {name};
-    if (resolved_name.empty()) {
-        resolved_name =
-            fmt::format("Data Set {}", implementation->get_number_of_grid_point_data_sets());
-    }
-    return add_grid_point_data_set(GridPointDataSet(grid_point_data_vector, resolved_name));
+    return add_grid_point_data_set(GridPointDataSet(grid_point_data_vector));
 }
 
 std::size_t
@@ -228,9 +199,6 @@ void RegularGridInterpolator::normalize_grid_point_data_sets_at_target(const dou
     return implementation->normalize_grid_point_data_sets_at_target(scalar);
 }
 
-// Public printing methods
-std::string RegularGridInterpolator::write_data() { return implementation->write_data(); }
-
 // Public calculation methods
 void RegularGridInterpolator::set_target(const std::vector<double>& target)
 {
@@ -281,18 +249,5 @@ const std::vector<TargetBoundsStatus>& RegularGridInterpolator::get_target_bound
 }
 
 void RegularGridInterpolator::clear_target() { implementation->clear_target(); }
-
-// Public logging
-
-void RegularGridInterpolator::set_courier(const std::shared_ptr<Courier::Courier>& courier,
-                                          bool set_grid_axes_couriers)
-{
-    implementation->set_courier(courier, set_grid_axes_couriers);
-}
-
-std::shared_ptr<Courier::Courier> RegularGridInterpolator::get_courier()
-{
-    return implementation->get_courier();
-}
 
 } // namespace Btwxt

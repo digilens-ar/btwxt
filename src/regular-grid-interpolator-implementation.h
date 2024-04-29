@@ -9,10 +9,6 @@
 #include <memory>
 #include <vector>
 
-// vendor
-#include <courier/courier.h>
-#include <courier/helpers.h>
-
 // btwxt
 #include <btwxt/btwxt.h>
 
@@ -20,25 +16,16 @@ namespace Btwxt {
 
 enum class Method { undefined, constant, linear, cubic };
 
-class RegularGridInterpolatorImplementation : public Courier::Sender {
+class RegularGridInterpolatorImplementation {
     friend class GridAxis;
 
   public:
     RegularGridInterpolatorImplementation() = default;
 
-    RegularGridInterpolatorImplementation(const std::vector<GridAxis>& grid_axes,
-                                          std::string name,
-                                          const std::shared_ptr<Courier::Courier>& courier);
+    RegularGridInterpolatorImplementation(const std::vector<GridAxis>& grid_axes);
 
     RegularGridInterpolatorImplementation(const std::vector<GridAxis>& grid_axes,
-                                          const std::vector<GridPointDataSet>& grid_point_data_sets,
-                                          std::string name,
-                                          const std::shared_ptr<Courier::Courier>& courier);
-
-    RegularGridInterpolatorImplementation(const RegularGridInterpolatorImplementation& source);
-
-    RegularGridInterpolatorImplementation&
-    operator=(const RegularGridInterpolatorImplementation& source) = default;
+                                          const std::vector<GridPointDataSet>& grid_point_data_sets);
 
     // Data manipulation and settings
     std::size_t add_grid_point_data_set(const GridPointDataSet& grid_point_data_set);
@@ -79,19 +66,12 @@ class RegularGridInterpolatorImplementation : public Courier::Sender {
 
     void normalize_grid_point_data_set(std::size_t data_set_index, double scalar = 1.0);
 
-    std::string write_data();
-
-    void set_courier(const std::shared_ptr<Courier::Courier>& courier,
-                     bool set_grid_axes_couriers = false);
-
     // Public getters
     [[nodiscard]] std::pair<double, double> get_extrapolation_limits(std::size_t axis_index) const
     {
         check_axis_index(axis_index, "get extrapolation limits");
         return grid_axes[axis_index].get_extrapolation_limits();
     };
-
-    [[nodiscard]] inline std::shared_ptr<Courier::Courier> get_courier() const { return courier; };
 
     [[nodiscard]] inline std::size_t get_number_of_grid_axes() const
     {
@@ -240,8 +220,6 @@ class RegularGridInterpolatorImplementation : public Courier::Sender {
 
     void setup();
 
-    void set_axes_parent_pointers();
-
     void check_grid_point_data_set_size(const GridPointDataSet& grid_point_data_set);
 
     void calculate_floor_to_ceiling_fractions();
@@ -260,32 +238,13 @@ class RegularGridInterpolatorImplementation : public Courier::Sender {
 
     void set_axis_floor_grid_point_index(std::size_t axis_index);
 
-    void check_axis_index(std::size_t axis_index, const std::string& action_description) const
-    {
-        if (axis_index > number_of_grid_axes - 1) {
-            send_error(fmt::format(
-                "Axis index, {}, does not exist. Unable to {}. Number of grid axes = {}.",
-                axis_index,
-                action_description,
-                number_of_grid_axes));
-        }
-    }
+    void check_axis_index(std::size_t axis_index, const std::string& action_description) const;
 
     void check_data_set_index(std::size_t data_set_index,
-                              const std::string& action_description) const
-    {
-        if (data_set_index > number_of_grid_point_data_sets - 1) {
-            send_error(fmt::format("Data set index, {}, does not exist. Unable to {}. Number of "
-                                   "grid point data sets = {}.",
-                                   data_set_index,
-                                   action_description,
-                                   number_of_grid_point_data_sets));
-        }
-    }
+                              const std::string& action_description) const;
 };
 
-std::vector<GridAxis> construct_grid_axes(const std::vector<std::vector<double>>& grid,
-                                          const std::shared_ptr<Courier::Courier>& courier_in);
+std::vector<GridAxis> construct_grid_axes(const std::vector<std::vector<double>>& grid);
 
 std::vector<GridPointDataSet>
 construct_grid_point_data_sets(const std::vector<std::vector<double>>& grid_point_data_sets);

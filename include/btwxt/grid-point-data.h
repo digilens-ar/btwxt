@@ -11,8 +11,6 @@
 #include <string_view>
 #include <vector>
 
-// btwxt
-#include "messaging.h"
 
 namespace Btwxt {
 
@@ -23,12 +21,12 @@ class GridPointDataSet {
     // Constructors
     GridPointDataSet() = default;
 
-    explicit GridPointDataSet(std::vector<double> data, std::string name = "")
-        : data(std::move(data)), name(std::move(name))
+    explicit GridPointDataSet(std::vector<double> data)
+        : data(std::move(data))
     {
     }
+
     std::vector<double> data;
-    std::string name;
 };
 
 } // namespace Btwxt

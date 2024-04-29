@@ -1,3 +1,4 @@
+
 cmake_minimum_required(VERSION 3.10)
 
 project(btwxt)
@@ -12,6 +13,7 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif ()
 
 find_package(Git QUIET)
+find_package(spdlog CONFIG REQUIRED)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
@@ -31,7 +33,6 @@ endif ()
 
 add_subdirectory("include/${PROJECT_NAME}")
 add_subdirectory(src)
-add_subdirectory(vendor)
 
 if (${PROJECT_NAME}_BUILD_TESTING)
     add_subdirectory(test)

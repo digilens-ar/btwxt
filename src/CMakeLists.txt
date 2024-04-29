@@ -17,7 +17,8 @@ else ()
     add_library(${PROJECT_NAME} SHARED ${library_sources})
 endif ()
 
-target_link_libraries(${PROJECT_NAME} PUBLIC ${PROJECT_NAME}_interface courier fmt)
+target_link_libraries(${PROJECT_NAME} PUBLIC ${PROJECT_NAME}_interface)
+target_link_libraries(${PROJECT_NAME} PRIVATE spdlog::spdlog)
 
 target_compile_options(btwxt PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/W4>
