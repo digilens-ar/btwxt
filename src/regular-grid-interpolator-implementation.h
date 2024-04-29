@@ -4,9 +4,7 @@
 #pragma once
 
 // Standard
-#include <functional>
 #include <map>
-#include <memory>
 #include <vector>
 
 // btwxt
@@ -214,8 +212,6 @@ class RegularGridInterpolatorImplementation {
     // Internal methods
     std::size_t get_grid_point_index_relative(const std::vector<std::size_t>& coordinates,
                                               const std::vector<short>& translation);
-
-    void setup();
 
     void check_grid_point_data_set_size(const GridPointDataSet& grid_point_data_set);
 

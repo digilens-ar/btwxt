@@ -34,7 +34,20 @@ RegularGridInterpolatorImplementation::RegularGridInterpolatorImplementation(
     , interpolation_coefficients(number_of_grid_axes, std::vector<double>(2, 0.))
     , cubic_slope_coefficients(number_of_grid_axes, std::vector<double>(2, 0.))
 {
-    setup();
+    // set axis sizes and calculate number of grid points
+    number_of_grid_points = 1;
+    for (std::size_t axis_index = number_of_grid_axes; axis_index-- > 0;) {
+        std::size_t length =
+            grid_axes[axis_index].get_length(); // length > 0 ensured by GridAxis constructor
+        grid_axis_lengths[axis_index] = length;
+        grid_axis_step_size[axis_index] = number_of_grid_points;
+        number_of_grid_points *= length;
+    }
+
+    // Check grid point data set sizes
+    for (const auto& grid_point_data_set : grid_point_data_sets) {
+        check_grid_point_data_set_size(grid_point_data_set);
+    }
 }
 
 std::size_t RegularGridInterpolatorImplementation::add_grid_point_data_set(
@@ -259,24 +272,6 @@ std::vector<std::size_t> RegularGridInterpolatorImplementation::get_neighboring_
     return get_neighboring_indices_at_target();
 }
 // private methods
-
-void RegularGridInterpolatorImplementation::setup()
-{
-    // set axis sizes and calculate number of grid points
-    number_of_grid_points = 1;
-    for (std::size_t axis_index = number_of_grid_axes; axis_index-- > 0;) {
-        std::size_t length =
-            grid_axes[axis_index].get_length(); // length > 0 ensured by GridAxis constructor
-        grid_axis_lengths[axis_index] = length;
-        grid_axis_step_size[axis_index] = number_of_grid_points;
-        number_of_grid_points *= length;
-    }
-
-    // Check grid point data set sizes
-    for (const auto& grid_point_data_set : grid_point_data_sets) {
-        check_grid_point_data_set_size(grid_point_data_set);
-    }
-}
 
 void RegularGridInterpolatorImplementation::check_grid_point_data_set_size(
     const GridPointDataSet& grid_point_data_set)
