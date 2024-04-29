@@ -43,7 +43,7 @@ export(
 
 install(
     EXPORT btwxt-export
-    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/btwxt
     FILE btwxt-targets.cmake
     NAMESPACE btwxt::
 )
@@ -52,5 +52,5 @@ install(
     FILES
         ${PROJECT_SOURCE_DIR}/cmake/btwxt-config.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/btwxt-config-version.cmake
-    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/btwxt
 )
