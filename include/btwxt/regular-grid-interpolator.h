@@ -29,32 +29,26 @@ class RegularGridInterpolator {
     RegularGridInterpolator();
 
     explicit RegularGridInterpolator(
-        const std::vector<std::vector<double>>& grid_axis_vectors,
-        std::string name = "Unnamed RegularGridInterpolator");
+        const std::vector<std::vector<double>>& grid_axis_vectors);
 
     RegularGridInterpolator(
         const std::vector<std::vector<double>>& grid_axis_vectors,
-        const std::vector<std::vector<double>>& grid_point_data_vectors,
-        std::string name = "Unnamed RegularGridInterpolator");
+        const std::vector<std::vector<double>>& grid_point_data_vectors);
 
     explicit RegularGridInterpolator(
-        const std::vector<GridAxis>& grid_axes,
-        std::string name = "Unnamed RegularGridInterpolator");
+        const std::vector<GridAxis>& grid_axes);
 
     RegularGridInterpolator(
         const std::vector<GridAxis>& grid_axes,
-        const std::vector<std::vector<double>>& grid_point_data_vectors,
-        std::string name = "Unnamed RegularGridInterpolator");
+        const std::vector<std::vector<double>>& grid_point_data_vectors);
 
     RegularGridInterpolator(
         const std::vector<std::vector<double>>& grid_axis_vectors,
-        const std::vector<GridPointDataSet>& grid_point_data_sets,
-        std::string name = "Unnamed RegularGridInterpolator");
+        const std::vector<GridPointDataSet>& grid_point_data_sets);
 
     RegularGridInterpolator(
         const std::vector<GridAxis>& grid_axes,
-        const std::vector<GridPointDataSet>& grid_point_data_sets,
-        std::string name = "Unnamed RegularGridInterpolator");
+        const std::vector<GridPointDataSet>& grid_point_data_sets);
 
     ~RegularGridInterpolator();
 
