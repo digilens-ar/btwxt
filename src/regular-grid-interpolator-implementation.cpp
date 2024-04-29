@@ -63,9 +63,9 @@ std::size_t RegularGridInterpolatorImplementation::add_grid_point_data_set(
 void RegularGridInterpolatorImplementation::set_target(const std::vector<double>& target_in)
 {
     if (target_in.size() != number_of_grid_axes) {
-        spdlog::error("Target (size={}) and grid (size={}) do not have the same dimensions.",
+        throw std::runtime_error(fmt::format("Target (size={}) and grid (size={}) do not have the same dimensions.",
                         target_in.size(),
-                        number_of_grid_axes);
+                        number_of_grid_axes));
     }
     if (target_is_set) {
         if ((target_in == target) && (methods == get_interpolation_methods())) {
@@ -84,7 +84,7 @@ void RegularGridInterpolatorImplementation::set_target(const std::vector<double>
 const std::vector<double>& RegularGridInterpolatorImplementation::get_target() const
 {
     if (!target_is_set) {
-         spdlog::error("The current target was requested, but no target has been set.");
+         throw std::runtime_error("The current target was requested, but no target has been set.");
     }
     return target;
 }
@@ -99,10 +99,10 @@ void RegularGridInterpolatorImplementation::clear_target()
 std::vector<double> RegularGridInterpolatorImplementation::get_results() const
 {
     if (number_of_grid_point_data_sets == 0u) {
-        spdlog::error("There are no grid point data sets. No results returned.");
+        throw std::runtime_error("There are no grid point data sets. No results returned.");
     }
     if (!target_is_set) {
-         spdlog::error("Results were requested, but no target has been set.");
+         throw std::runtime_error("Results were requested, but no target has been set.");
     }
     return results;
 }
@@ -118,7 +118,7 @@ void RegularGridInterpolatorImplementation::normalize_grid_point_data_sets_at_ta
     const double scalar)
 {
     if (!target_is_set) {
-         spdlog::error("Cannot normalize grid point data sets. No target has been set.");
+         throw std::runtime_error("Cannot normalize grid point data sets. No target has been set.");
     }
     for (std::size_t data_set_index = 0; data_set_index < number_of_grid_point_data_sets;
          ++data_set_index) {
@@ -133,9 +133,9 @@ double RegularGridInterpolatorImplementation::normalize_grid_point_data_set_at_t
 {
     check_data_set_index(data_set_index, "normalize grid point data set");
     if (!target_is_set) {
-        spdlog::error(
+        throw std::runtime_error(fmt::format(
             "GridPointDataSet '{}': Cannot normalize grid point data set. No target has been set.",
-            data_set_index);
+            data_set_index));
     }
     // create a scalar which represents the product of the inverted normalization factor and the
     // value in the data set at the independent variable reference value
@@ -153,8 +153,8 @@ void RegularGridInterpolatorImplementation::normalize_grid_point_data_set(
     check_data_set_index(data_set_index, "normalize grid point data set");
     auto& data_set = grid_point_data_sets[data_set_index].data;
     if (scalar == 0.0) {
-         spdlog::error("GridPointDataSet '{}': Attempt to normalize grid point data set by zero.",
-                        data_set_index);
+         throw std::runtime_error(fmt::format("GridPointDataSet '{}': Attempt to normalize grid point data set by zero.",
+                        data_set_index));
     }
     scalar = 1.0 / scalar;
     std::transform(data_set.begin(),
@@ -234,7 +234,7 @@ double RegularGridInterpolatorImplementation::get_grid_point_weighting_factor(
 std::vector<std::size_t> RegularGridInterpolatorImplementation::get_neighboring_indices_at_target()
 {
     if (!target_is_set) {
-         spdlog::error("Cannot retrieve neighboring indices. No target has been set.");
+        throw std::runtime_error("Cannot retrieve neighboring indices. No target has been set.");
     }
     std::vector<std::vector<std::size_t>> axes_neighbor_indices(
         number_of_grid_axes,
@@ -288,10 +288,10 @@ void RegularGridInterpolatorImplementation::check_grid_point_data_set_size(
     const GridPointDataSet& grid_point_data_set)
 {
     if (grid_point_data_set.data.size() != number_of_grid_points) {
-         spdlog::error(
+         throw std::runtime_error(fmt::format(
             "GridPointDataSet: Size ({}) does not match number of grid points ({}).",
             grid_point_data_set.data.size(),
-            number_of_grid_points);
+            number_of_grid_points));
     }
 }
 
@@ -380,11 +380,11 @@ void RegularGridInterpolatorImplementation::check_axis_index(std::size_t axis_in
     const std::string& action_description) const
 {
     if (axis_index > number_of_grid_axes - 1) {
-         spdlog::error(
+         throw std::runtime_error(fmt::format(
             "Axis index, {}, does not exist. Unable to {}. Number of grid axes = {}.",
             axis_index,
             action_description,
-            number_of_grid_axes);
+            number_of_grid_axes));
     }
 }
 
@@ -392,11 +392,11 @@ void RegularGridInterpolatorImplementation::check_data_set_index(std::size_t dat
     const std::string& action_description) const
 {
     if (data_set_index > number_of_grid_point_data_sets - 1) {
-        spdlog::error("Data set index, {}, does not exist. Unable to {}. Number of "
+        throw std::runtime_error(fmt::format("Data set index, {}, does not exist. Unable to {}. Number of "
                                "grid point data sets = {}.",
                                data_set_index,
                                action_description,
-                               number_of_grid_point_data_sets);
+                               number_of_grid_point_data_sets));
     }
 }
 
@@ -433,18 +433,18 @@ void RegularGridInterpolatorImplementation::consolidate_methods()
                 methods[axis_index] = extrapolation_methods[axis_index];
                 break;
             case TargetBoundsStatus::below_lower_extrapolation_limit:
-                 spdlog::error(error_format,
+                 throw std::runtime_error(fmt::format(error_format,
                                        axis_index,
                                        target[axis_index],
                                        "below",
-                                       get_extrapolation_limits(axis_index).first);
+                                       get_extrapolation_limits(axis_index).first));
                 break;
             case TargetBoundsStatus::above_upper_extrapolation_limit:
-                 spdlog::error(error_format,
+                 throw std::runtime_error(fmt::format(error_format,
                                        axis_index,
                                        target[axis_index],
                                        "above",
-                                       get_extrapolation_limits(axis_index).second);
+                                       get_extrapolation_limits(axis_index).second));
                 break;
             case TargetBoundsStatus::interpolate:
                 break;

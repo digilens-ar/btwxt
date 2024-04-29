@@ -11,7 +11,8 @@ option(BTWXT_BUILD_TESTING "Build BTWXT testing targets" OFF)
 
 add_subdirectory(src)
 
-if (${PROJECT_NAME}_BUILD_TESTING)
+if (BTWXT_BUILD_TESTING)
+    find_package(GTest CONFIG REQUIRED)
     enable_testing()
     add_subdirectory(test)
 endif ()

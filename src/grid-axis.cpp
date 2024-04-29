@@ -21,7 +21,7 @@ GridAxis::GridAxis(std::vector<double> values_in,
           2, std::vector<double>(std::max(static_cast<int>(values.size()) - 1, 0), 1.0))
 {
     if (values.empty()) {
-        spdlog::error("Cannot create grid axis from a zero-length vector.");
+        throw std::runtime_error("Cannot create grid axis from a zero-length vector.");
     }
     check_grid_sorted();
     check_extrapolation_limits();
@@ -91,7 +91,7 @@ void GridAxis::check_grid_sorted()
 {
     bool grid_is_sorted = vector_is_valid(values);
     if (!grid_is_sorted) {
-        spdlog::error("Values are not sorted, or have duplicates.");
+        throw std::runtime_error("Values are not sorted, or have duplicates.");
     }
 }
 
@@ -100,13 +100,13 @@ void GridAxis::check_extrapolation_limits()
     constexpr std::string_view error_format {"{} extrapolation limit ({:.6g}) is within the range "
                                              "of grid axis values [{:.6g}, {:.6g}]."};
     if (extrapolation_limits.first > values[0]) {
-        spdlog::error(
-            error_format, "Lower", extrapolation_limits.first, values[0], values.back());
+        throw std::runtime_error(fmt::format(
+            error_format, "Lower", extrapolation_limits.first, values[0], values.back()));
         extrapolation_limits.first = values[0];
     }
     if (extrapolation_limits.second < values.back()) {
-        spdlog::error(
-            error_format, "Upper", extrapolation_limits.second, values[0], values.back());
+        throw std::runtime_error(fmt::format(
+            error_format, "Upper", extrapolation_limits.second, values[0], values.back()));
         extrapolation_limits.second = values.back();
     }
 }

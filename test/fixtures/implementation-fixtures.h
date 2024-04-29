@@ -3,12 +3,8 @@
 
 #pragma once
 
-// Standard
-#include <memory>
-
 // Vendor
 #include <gtest/gtest.h>
-#include <fmt/format.h>
 
 // btwxt
 #include "regular-grid-interpolator-implementation.h"
@@ -27,12 +23,9 @@ class GridImplementationFixture : public testing::Test {
 
     void setup()
     {
-        auto courier = std::make_shared<BtwxtDefaultCourier>();
         interpolator =
-            RegularGridInterpolatorImplementation(construct_grid_axes(grid, courier),
-                                                  construct_grid_point_data_sets(data_sets),
-                                                  "Test Implementation RGI",
-                                                  courier);
+            RegularGridInterpolatorImplementation(construct_grid_axes(grid),
+                                                  construct_grid_point_data_sets(data_sets));
     }
 };
 
@@ -117,9 +110,7 @@ class EmptyGridImplementationFixture : public testing::Test {
 
     void setup()
     {
-        auto courier = std::make_shared<BtwxtDefaultCourier>();
-        interpolator = RegularGridInterpolatorImplementation(
-            construct_grid_axes(grid, courier), "Test Implementation RGI", courier);
+        interpolator = RegularGridInterpolatorImplementation(construct_grid_axes(grid));
     }
 };
 

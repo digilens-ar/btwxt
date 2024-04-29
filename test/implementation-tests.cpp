@@ -51,14 +51,7 @@ TEST_F(CubicImplementationFixture, switch_interp_method)
 TEST_F(CubicImplementationFixture, interpolate)
 {
     interpolator.set_target(target);
-
-    auto start = std::chrono::high_resolution_clock::now();
     std::vector<double> result = interpolator.get_results();
-    auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    BtwxtDefaultCourier message_display;
-    message_display.send_info(
-        fmt::format("Time to do cubic interpolation: {} microseconds", duration.count()));
     EXPECT_THAT(result, testing::ElementsAre(testing::DoubleEq(4.158), testing::DoubleEq(11.836)));
 }
 
@@ -284,17 +277,13 @@ TEST_F(Grid2DImplementationFixture, construct_from_axes)
     GridAxis ax0 = GridAxis({0, 10, 15},
                             InterpolationMethod::linear,
                             ExtrapolationMethod::constant,
-                            {-DBL_MAX, DBL_MAX},
-                            "ax0");
-    auto courier = ax0.get_courier();
+                            {-DBL_MAX, DBL_MAX});
     GridAxis ax1 = GridAxis({4, 6},
                             InterpolationMethod::linear,
                             ExtrapolationMethod::constant,
-                            {-DBL_MAX, DBL_MAX},
-                            "ax1",
-                            courier);
+                            {-DBL_MAX, DBL_MAX});
     std::vector<GridAxis> test_axes = {ax0, ax1};
-    interpolator = RegularGridInterpolatorImplementation(test_axes, "Test 2D Grid RGI", courier);
+    interpolator = RegularGridInterpolatorImplementation(test_axes);
     EXPECT_EQ(interpolator.get_number_of_grid_axes(), 2u);
     EXPECT_EQ(interpolator.get_number_of_grid_point_data_sets(), 0u);
     EXPECT_THAT(interpolator.get_grid_axis_lengths(), testing::ElementsAre(3, 2));
@@ -305,7 +294,7 @@ TEST_F(Grid2DImplementationFixture, construct_from_axes)
     EXPECT_THAT(interpolator.get_grid_point_data(coords), testing::ElementsAre(8));
 
     interpolator = RegularGridInterpolatorImplementation(
-        test_axes, construct_grid_point_data_sets(data_sets), "Test 2D Grid RGI", courier);
+        test_axes, construct_grid_point_data_sets(data_sets));
     EXPECT_EQ(interpolator.get_number_of_grid_axes(), 2u);
     EXPECT_EQ(interpolator.get_number_of_grid_point_data_sets(), 2u);
     EXPECT_THAT(interpolator.get_grid_point_data(coords), testing::ElementsAre(8, 16));
