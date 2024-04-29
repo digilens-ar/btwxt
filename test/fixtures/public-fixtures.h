@@ -26,18 +26,6 @@
 
 namespace Btwxt {
 
-class CourierWithContext : public BtwxtDefaultCourier {
-  public:
-    std::string context;
-
-  protected:
-    void write_message(const std::string& message_type, const std::string& message) override
-    {
-        std::string message_context = context.empty() ? "" : fmt::format(" {}:", context);
-        std::cout << fmt::format("  [{}]{} {}", message_type, message_context, message)
-                  << std::endl;
-    }
-};
 
 class GridFixture : public testing::Test {
   public:
@@ -51,7 +39,7 @@ class GridFixture : public testing::Test {
     virtual void setup()
     {
         interpolator = RegularGridInterpolator(
-            grid, data_sets, "Test RGI", std::make_shared<CourierWithContext>());
+            grid, data_sets);
     }
 };
 

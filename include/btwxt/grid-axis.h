@@ -12,8 +12,6 @@
 #include <string_view>
 #include <vector>
 
-// btwxt
-#include "messaging.h"
 
 namespace Btwxt {
 
@@ -22,7 +20,7 @@ enum class ExtrapolationMethod { constant, linear };
 
 class RegularGridInterpolatorImplementation;
 
-class GridAxis : public Courier::Sender {
+class GridAxis {
     // A single input dimension of the grid
 
     friend class RegularGridInterpolatorImplementation;
@@ -35,9 +33,7 @@ class GridAxis : public Courier::Sender {
         std::vector<double> values,
         InterpolationMethod interpolation_method = InterpolationMethod::linear,
         ExtrapolationMethod extrapolation_method = ExtrapolationMethod::constant,
-        std::pair<double, double> extrapolation_limits = {-DBL_MAX, DBL_MAX},
-        std::string name = "",
-        const std::shared_ptr<Courier::Courier>& courier = std::make_shared<BtwxtDefaultCourier>());
+        std::pair<double, double> extrapolation_limits = {-DBL_MAX, DBL_MAX});
 
     // Setters
     void set_interpolation_method(InterpolationMethod interpolation_method_in);
@@ -47,12 +43,6 @@ class GridAxis : public Courier::Sender {
         extrapolation_limits = limits;
         check_extrapolation_limits();
     }
-
-    void set_courier(std::shared_ptr<Courier::Courier> courier_in)
-    {
-        courier = std::move(courier_in);
-    }
-    std::shared_ptr<Courier::Courier> get_courier() { return courier; };
 
     // Getters
     [[nodiscard]] const std::vector<double>& get_values() const { return values; }
