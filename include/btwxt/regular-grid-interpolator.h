@@ -95,28 +95,11 @@ class RegularGridInterpolator {
 
     double get_value_at_target(const std::vector<double>& target, std::size_t data_set_index);
 
-    double operator()(const std::vector<double>& target, const std::size_t data_set_index)
-    {
-        return get_value_at_target(target, data_set_index);
-    }
-
     double get_value_at_target(std::size_t data_set_index);
-
-    double operator()(const std::size_t data_set_index)
-    {
-        return get_value_at_target(data_set_index);
-    }
 
     std::vector<double> get_values_at_target(const std::vector<double>& target);
 
-    std::vector<double> operator()(const std::vector<double>& target)
-    {
-        return get_values_at_target(target);
-    }
-
     std::vector<double> get_values_at_target();
-
-    std::vector<double> operator()() { return get_values_at_target(); }
 
     [[nodiscard]] std::vector<std::size_t> get_neighboring_indices_at_target() const;
 

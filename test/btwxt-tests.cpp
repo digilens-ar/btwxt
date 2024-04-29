@@ -36,12 +36,12 @@ TEST_F(FunctionFixture, scipy_3d_grid)
     double expected_value;
 
     target = {2.1, 6.2, 8.3};
-    result = interpolator(target)[0];
+    result = interpolator.get_values_at_target(target)[0];
     expected_value = 125.80469388; // Interpolated value from example
     EXPECT_NEAR(result, expected_value, epsilon);
 
     target = {3.3, 5.2, 7.1};
-    result = interpolator(target)[0];
+    result = interpolator.get_values_at_target(target)[0];
     expected_value = 146.30069388; // Interpolated value from example
     EXPECT_NEAR(result, expected_value, epsilon);
 }
@@ -66,7 +66,7 @@ TEST_F(FunctionFixture, scipy_2d_grid)
     std::vector<std::vector<double>> target_space {test_axis_values1, test_axis_values2};
     auto targets = cartesian_product(target_space);
     for (const auto& t : targets) {
-        double result = interpolator(t)[0];
+        double result = interpolator.get_values_at_target(t)[0];
         double expected_value = functions[0](t);
 
         bool extrapolating = false;
@@ -269,12 +269,12 @@ TEST_F(Grid2DFixture, extrapolate)
 {
     // axis1 is designated constant extrapolation
     target = {10, 3};
-    std::vector<double> result = interpolator(target);
+    std::vector<double> result = interpolator.get_values_at_target(target);
     EXPECT_THAT(result, testing::ElementsAre(testing::DoubleEq(2), testing::DoubleEq(4)));
 
     // axis0 is designated linear extrapolation
     target = {18, 5};
-    result = interpolator(target);
+    result = interpolator.get_values_at_target(target);
     EXPECT_THAT(result, testing::ElementsAre(testing::DoubleEq(1.8), testing::DoubleEq(3.6)));
 }
 
@@ -471,7 +471,7 @@ TEST_F(Function4DFixture, multi_timer)
         // Get starting time point
         auto start = std::chrono::high_resolution_clock::now();
         for (const auto& target : set_of_targets) {
-            std::vector<double> result = interpolator(target);
+            std::vector<double> result = interpolator.get_values_at_target(target);
         }
         // Get ending time point
         auto stop = std::chrono::high_resolution_clock::now();
