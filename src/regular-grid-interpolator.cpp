@@ -58,7 +58,7 @@ RegularGridInterpolator::RegularGridInterpolator(
 
 RegularGridInterpolator::RegularGridInterpolator(const std::vector<GridAxis>& grid)
     : implementation(
-          std::make_unique<RegularGridInterpolatorImplementation>(grid))
+          std::make_unique<RegularGridInterpolatorImplementation>(grid, std::vector<GridPointDataSet>{}))
 {
 }
 

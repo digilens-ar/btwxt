@@ -19,23 +19,18 @@ class GridImplementationFixture : public testing::Test {
     std::vector<double> target;
     RegularGridInterpolatorImplementation interpolator;
 
-    GridImplementationFixture() = default;
+    GridImplementationFixture(std::vector<std::vector<double>> const& gridd, std::vector<std::vector<double>> const& datasetss):
+        grid(gridd),
+        data_sets(datasetss),
+        interpolator(construct_grid_axes(grid), construct_grid_point_data_sets(data_sets))
+    {}
 
-    void setup()
-    {
-        interpolator =
-            RegularGridInterpolatorImplementation(construct_grid_axes(grid),
-                                                  construct_grid_point_data_sets(data_sets));
-    }
 };
 
 class Grid2DImplementationFixture : public GridImplementationFixture {
   protected:
-    Grid2DImplementationFixture()
-    {
-        grid = grid = {{0, 10, 15}, {4, 6}};
-        //         4  6
-        data_sets = {{6,
+    Grid2DImplementationFixture():
+        GridImplementationFixture({{0, 10, 15}, {4, 6}},  {{6,
                       3,   // 0
                       2,
                       8,   // 10
@@ -46,20 +41,17 @@ class Grid2DImplementationFixture : public GridImplementationFixture {
                       4,
                       16,  // 10
                       8,
-                      4}}; // 15
+                      4}}) // 15
+    {
         target = {12, 5};
-        setup();
         interpolator.set_axis_extrapolation_method(0, ExtrapolationMethod::linear);
     }
 };
 
 class CubicImplementationFixture : public GridImplementationFixture {
   protected:
-    CubicImplementationFixture()
-    {
-        grid = {{6, 10, 15, 20}, {2, 4, 6, 8}};
-        data_sets =
-            //  2   4   6    8
+    CubicImplementationFixture():
+        GridImplementationFixture({{6, 10, 15, 20}, {2, 4, 6, 8}},
             {{4,
               3,
               1.5,
@@ -92,36 +84,21 @@ class CubicImplementationFixture : public GridImplementationFixture {
               25,
               20,
               10,
-              5}}; // 20
-
+              5}}) // 20
+    {
         target = {12, 4.5};
-        setup();
         interpolator.set_axis_interpolation_method(0, InterpolationMethod::cubic);
     }
 };
 
-class EmptyGridImplementationFixture : public testing::Test {
-  protected:
-  public:
-    std::vector<std::vector<double>> grid;
-    RegularGridInterpolatorImplementation interpolator;
-
-    EmptyGridImplementationFixture() = default;
-
-    void setup()
-    {
-        interpolator = RegularGridInterpolatorImplementation(construct_grid_axes(grid));
-    }
-};
 
 class Grid3DImplementationFixture : public GridImplementationFixture {
   protected:
-    Grid3DImplementationFixture()
+    Grid3DImplementationFixture():
+        GridImplementationFixture({{-15, 0.2, 105}, {0, 10, 15}, {4, 6}},
+           {{6, 3, 2, 8, 4, 2, 3, 6, 13, 2, 0, 15, 3, 6, 13, 2, 0, 15}})
     {
-        grid = {{-15, 0.2, 105}, {0, 10, 15}, {4, 6}};
-        data_sets = {{6, 3, 2, 8, 4, 2, 3, 6, 13, 2, 0, 15, 3, 6, 13, 2, 0, 15}};
         target = {26.9, 12, 5};
-        setup();
         interpolator.set_axis_interpolation_method(0, InterpolationMethod::linear);
         interpolator.set_axis_interpolation_method(1, InterpolationMethod::cubic);
         interpolator.set_axis_interpolation_method(2, InterpolationMethod::linear);

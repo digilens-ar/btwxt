@@ -13,12 +13,6 @@
 namespace Btwxt {
 
 RegularGridInterpolatorImplementation::RegularGridInterpolatorImplementation(
-    const std::vector<GridAxis>& grid)
-    : RegularGridInterpolatorImplementation(grid, {})
-{
-}
-
-RegularGridInterpolatorImplementation::RegularGridInterpolatorImplementation(
     const std::vector<GridAxis>& grid_axes,
     const std::vector<GridPointDataSet>& grid_point_data_sets)
     :

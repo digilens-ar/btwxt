@@ -20,9 +20,6 @@ class RegularGridInterpolatorImplementation {
     friend class GridAxis;
 
   public:
-    RegularGridInterpolatorImplementation() = default;
-
-    RegularGridInterpolatorImplementation(const std::vector<GridAxis>& grid_axes);
 
     RegularGridInterpolatorImplementation(const std::vector<GridAxis>& grid_axes,
                                           const std::vector<GridPointDataSet>& grid_point_data_sets);
