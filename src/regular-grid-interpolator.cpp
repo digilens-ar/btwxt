@@ -1,14 +1,7 @@
 /* Copyright (c) 2018 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
 
-// Standard
-#include <iostream>
-#include <numeric>
 
-// btwxt
-#include <btwxt/btwxt.h>
-
-// btwxt private
 #include "regular-grid-interpolator-implementation.h"
 
 namespace Btwxt {

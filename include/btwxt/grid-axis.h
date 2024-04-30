@@ -4,12 +4,7 @@
 #ifndef GRID_AXIS_H_
 #define GRID_AXIS_H_
 
-// Standard
 #include <algorithm>
-#include <cfloat>
-#include <memory>
-#include <optional>
-#include <string_view>
 #include <vector>
 
 

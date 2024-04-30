@@ -1,10 +1,8 @@
 /* Copyright (c) 2018 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
 
-// btwxt
-#include <btwxt/btwxt.h>
-#include "regular-grid-interpolator-implementation.h"
-#include "spdlog/spdlog.h"
+#include <btwxt/grid-axis.h>
+#include <spdlog/spdlog.h>
 
 namespace Btwxt {
 

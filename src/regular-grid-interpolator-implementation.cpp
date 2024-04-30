@@ -1,14 +1,11 @@
 /* Copyright (c) 2018 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
 
-// Standard
-#include <sstream>
 #include <unordered_map>
 #include <cassert>
-
-#include <btwxt/btwxt.h>
-#include <spdlog/spdlog.h>
 #include "regular-grid-interpolator-implementation.h"
+#include <format>
+#include <stdexcept>
 
 namespace Btwxt {
 
@@ -70,7 +67,7 @@ std::size_t RegularGridInterpolatorImplementation::add_grid_point_data_set(
 void RegularGridInterpolatorImplementation::set_target(const std::vector<double>& target_in)
 {
     if (target_in.size() != number_of_grid_axes) {
-        throw std::runtime_error(fmt::format("Target (size={}) and grid (size={}) do not have the same dimensions.",
+        throw std::runtime_error(std::format("Target (size={}) and grid (size={}) do not have the same dimensions.",
                         target_in.size(),
                         number_of_grid_axes));
     }
@@ -140,7 +137,7 @@ double RegularGridInterpolatorImplementation::normalize_grid_point_data_set_at_t
 {
     check_data_set_index(data_set_index, "normalize grid point data set");
     if (!target_is_set) {
-        throw std::runtime_error(fmt::format(
+        throw std::runtime_error(std::format(
             "GridPointDataSet '{}': Cannot normalize grid point data set. No target has been set.",
             data_set_index));
     }
@@ -160,7 +157,7 @@ void RegularGridInterpolatorImplementation::normalize_grid_point_data_set(
     check_data_set_index(data_set_index, "normalize grid point data set");
     auto& data_set = grid_point_data_sets[data_set_index].data;
     if (scalar == 0.0) {
-         throw std::runtime_error(fmt::format("GridPointDataSet '{}': Attempt to normalize grid point data set by zero.",
+         throw std::runtime_error(std::format("GridPointDataSet '{}': Attempt to normalize grid point data set by zero.",
                         data_set_index));
     }
     scalar = 1.0 / scalar;
@@ -277,7 +274,7 @@ void RegularGridInterpolatorImplementation::check_grid_point_data_set_size(
     const GridPointDataSet& grid_point_data_set)
 {
     if (grid_point_data_set.data.size() != number_of_grid_points) {
-         throw std::runtime_error(fmt::format(
+         throw std::runtime_error(std::format(
             "GridPointDataSet: Size ({}) does not match number of grid points ({}).",
             grid_point_data_set.data.size(),
             number_of_grid_points));
@@ -369,7 +366,7 @@ void RegularGridInterpolatorImplementation::check_axis_index(std::size_t axis_in
     const std::string& action_description) const
 {
     if (axis_index > number_of_grid_axes - 1) {
-         throw std::runtime_error(fmt::format(
+         throw std::runtime_error(std::format(
             "Axis index, {}, does not exist. Unable to {}. Number of grid axes = {}.",
             axis_index,
             action_description,
@@ -381,7 +378,7 @@ void RegularGridInterpolatorImplementation::check_data_set_index(std::size_t dat
     const std::string& action_description) const
 {
     if (data_set_index > number_of_grid_point_data_sets - 1) {
-        throw std::runtime_error(fmt::format("Data set index, {}, does not exist. Unable to {}. Number of "
+        throw std::runtime_error(std::format("Data set index, {}, does not exist. Unable to {}. Number of "
                                "grid point data sets = {}.",
                                data_set_index,
                                action_description,
@@ -422,14 +419,14 @@ void RegularGridInterpolatorImplementation::consolidate_methods()
                 methods[axis_index] = extrapolation_methods[axis_index];
                 break;
             case TargetBoundsStatus::below_lower_extrapolation_limit:
-                 throw std::runtime_error(fmt::format(error_format,
+                 throw std::runtime_error(std::format(error_format,
                                        axis_index,
                                        target[axis_index],
                                        "below",
                                        get_extrapolation_limits(axis_index).first));
                 break;
             case TargetBoundsStatus::above_upper_extrapolation_limit:
-                 throw std::runtime_error(fmt::format(error_format,
+                 throw std::runtime_error(std::format(error_format,
                                        axis_index,
                                        target[axis_index],
                                        "above",

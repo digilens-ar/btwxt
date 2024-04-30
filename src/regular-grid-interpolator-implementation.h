@@ -3,12 +3,13 @@
 
 #pragma once
 
-// Standard
 #include <map>
 #include <vector>
+#include <string>
+#include "btwxt/grid-point-data.h"
+#include "btwxt/regular-grid-interpolator.h"
 
-// btwxt
-#include <btwxt/btwxt.h>
+
 
 namespace Btwxt {
 
