@@ -32,44 +32,9 @@ std::vector<GridPointDataSet> construct_grid_point_data_sets(const std::vector<s
 
 // Constructors
 
-RegularGridInterpolator::RegularGridInterpolator() = default;
-
-RegularGridInterpolator::RegularGridInterpolator(
-    const std::vector<std::vector<double>>& grid_axis_vectors)
-    : RegularGridInterpolator(construct_grid_axes(grid_axis_vectors),
-                              std::vector<GridPointDataSet>())
-{
-}
-
-RegularGridInterpolator::RegularGridInterpolator(
-    const std::vector<std::vector<double>>& grid_axis_vectors,
-    const std::vector<std::vector<double>>& grid_point_data_vectors)
-    : RegularGridInterpolator(construct_grid_axes(grid_axis_vectors),
-                              construct_grid_point_data_sets(grid_point_data_vectors))
-{
-}
-
 RegularGridInterpolator::RegularGridInterpolator(const std::vector<GridAxis>& grid)
     : implementation(
           std::make_unique<RegularGridInterpolatorImplementation>(grid, std::vector<GridPointDataSet>{}))
-{
-}
-
-RegularGridInterpolator::RegularGridInterpolator(
-    const std::vector<GridAxis>& grid_axes,
-    const std::vector<std::vector<double>>& grid_point_data_vectors)
-    : implementation(std::make_unique<RegularGridInterpolatorImplementation>(
-          grid_axes,
-          construct_grid_point_data_sets(grid_point_data_vectors)))
-{
-}
-
-RegularGridInterpolator::RegularGridInterpolator(
-    const std::vector<std::vector<double>>& grid_axis_vectors,
-    const std::vector<GridPointDataSet>& grid_point_data_sets)
-    : implementation(std::make_unique<RegularGridInterpolatorImplementation>(
-          construct_grid_axes(grid_axis_vectors),
-          grid_point_data_sets))
 {
 }
 
@@ -101,19 +66,6 @@ RegularGridInterpolator& RegularGridInterpolator::operator=(const RegularGridInt
     return *this;
 }
 
-// Public manipulation methods
-
-std::size_t
-RegularGridInterpolator::add_grid_point_data_set(const std::vector<double>& grid_point_data_vector)
-{
-    return add_grid_point_data_set(GridPointDataSet(grid_point_data_vector));
-}
-
-std::size_t
-RegularGridInterpolator::add_grid_point_data_set(const GridPointDataSet& grid_point_data_set)
-{
-    return implementation->add_grid_point_data_set(grid_point_data_set);
-}
 
 void RegularGridInterpolator::set_axis_extrapolation_method(const std::size_t axis_index,
                                                             const ExtrapolationMethod method)
@@ -158,25 +110,10 @@ const GridPointDataSet& RegularGridInterpolator::get_grid_point_data_set(std::si
     return implementation->get_grid_point_data_set(data_set_index);
 }
 
-// Public normalization methods
-double RegularGridInterpolator::normalize_grid_point_data_set_at_target(
-    std::size_t data_set_index, const std::vector<double>& target, const double scalar)
-{
-    set_target(target);
-    return normalize_grid_point_data_set_at_target(data_set_index, scalar);
-}
-
 double RegularGridInterpolator::normalize_grid_point_data_set_at_target(std::size_t data_set_index,
                                                                         const double scalar)
 {
     return implementation->normalize_grid_point_data_set_at_target(data_set_index, scalar);
-}
-
-void RegularGridInterpolator::normalize_grid_point_data_sets_at_target(
-    const std::vector<double>& target, const double scalar)
-{
-    set_target(target);
-    normalize_grid_point_data_sets_at_target(scalar);
 }
 
 void RegularGridInterpolator::normalize_grid_point_data_sets_at_target(const double scalar)
@@ -190,21 +127,9 @@ void RegularGridInterpolator::set_target(const std::vector<double>& target)
     implementation->set_target(target);
 }
 
-double RegularGridInterpolator::get_value_at_target(const std::vector<double>& target,
-                                                    std::size_t data_set_index)
-{
-    set_target(target);
-    return get_value_at_target(data_set_index);
-}
-
 double RegularGridInterpolator::get_value_at_target(std::size_t data_set_index)
 {
     return implementation->get_results()[data_set_index];
-}
-
-std::vector<double> RegularGridInterpolator::get_values_at_target(const std::vector<double>& target)
-{
-    return implementation->get_results(target);
 }
 
 std::vector<double> RegularGridInterpolator::get_values_at_target()
@@ -217,12 +142,6 @@ std::vector<std::size_t> RegularGridInterpolator::get_neighboring_indices_at_tar
     return implementation->get_neighboring_indices_at_target();
 }
 
-std::vector<std::size_t>
-RegularGridInterpolator::get_neighboring_indices_at_target(const std::vector<double>& target_in)
-{
-    return implementation->get_neighboring_indices_at_target(target_in);
-}
-
 const std::vector<double>& RegularGridInterpolator::get_target()
 {
     return implementation->get_target();
@@ -232,7 +151,5 @@ const std::vector<TargetBoundsStatus>& RegularGridInterpolator::get_target_bound
 {
     return implementation->get_target_bounds_status();
 }
-
-void RegularGridInterpolator::clear_target() { implementation->clear_target(); }
 
 } // namespace Btwxt

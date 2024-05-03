@@ -6,7 +6,6 @@
 #include <map>
 #include <vector>
 #include <string>
-#include "btwxt/grid-point-data.h"
 #include "btwxt/regular-grid-interpolator.h"
 
 
@@ -24,7 +23,6 @@ class RegularGridInterpolatorImplementation {
                                           const std::vector<GridPointDataSet>& grid_point_data_sets);
 
     // Data manipulation and settings
-    std::size_t add_grid_point_data_set(const GridPointDataSet& grid_point_data_set);
 
     void set_axis_interpolation_method(std::size_t axis_index, InterpolationMethod method)
     {
@@ -50,11 +48,7 @@ class RegularGridInterpolatorImplementation {
 
     [[nodiscard]] const std::vector<double>& get_target() const;
 
-    void clear_target();
-
     [[nodiscard]] std::vector<double> get_results() const;
-
-    std::vector<double> get_results(const std::vector<double>& target);
 
     void normalize_grid_point_data_sets_at_target(double scalar = 1.0);
 
@@ -119,8 +113,6 @@ class RegularGridInterpolatorImplementation {
 
     std::vector<std::size_t> get_neighboring_indices_at_target();
 
-    std::vector<std::size_t> get_neighboring_indices_at_target(const std::vector<double>& target);
-
     [[nodiscard]] inline const std::vector<std::vector<double>>&
     get_interpolation_coefficients() const
     {
@@ -149,14 +141,9 @@ class RegularGridInterpolatorImplementation {
     };
 
     const std::vector<double>& get_grid_point_data(const std::vector<std::size_t>& coordinates);
-    const std::vector<double>& get_grid_point_data(std::size_t grid_point_index);
 
     std::vector<double> get_grid_point_data_relative(const std::vector<std::size_t>& coordinates,
                                                      const std::vector<short>& translation);
-
-    [[nodiscard]] std::vector<Method> get_interpolation_methods() const;
-
-    [[nodiscard]] std::vector<Method> get_extrapolation_methods() const;
 
     [[nodiscard]] std::size_t
     get_grid_point_index(const std::vector<std::size_t>& coordinates) const;
@@ -236,6 +223,11 @@ class RegularGridInterpolatorImplementation {
 
     void check_data_set_index(std::size_t data_set_index,
                               const std::string& action_description) const;
+
+    [[nodiscard]] std::vector<Method> get_interpolation_methods() const;
+
+    const std::vector<double>& get_grid_point_data(std::size_t grid_point_index);
+
 };
 
 std::vector<GridAxis> construct_grid_axes(const std::vector<std::vector<double>>& grid);

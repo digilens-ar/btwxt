@@ -6,6 +6,5 @@
 
 #include "grid-axis.h"
 #include "regular-grid-interpolator.h"
-#include "grid-point-data.h"
 
 #endif // define BTWXT_H_

@@ -29,10 +29,10 @@ namespace Btwxt {
 
 class GridFixture : public testing::Test {
   public:
-    std::vector<std::vector<double>> grid;
+    std::vector<GridAxis> grid;
     std::vector<std::vector<double>> data_sets;
     std::vector<double> target;
-    RegularGridInterpolator interpolator;
+    std::optional<RegularGridInterpolator> interpolator;
 
     GridFixture() = default;
 
@@ -47,7 +47,7 @@ class Grid2DFixture : public GridFixture {
   protected:
     Grid2DFixture()
     {
-        grid = {{0, 10, 15}, {4, 6}};
+        grid = {GridAxis({0, 10, 15}), GridAxis({4, 6})};
         //         4  6
         data_sets = {{6,
                       3,   // 0
@@ -63,7 +63,7 @@ class Grid2DFixture : public GridFixture {
                       4}}; // 15
         target = {12, 5};
         setup();
-        interpolator.set_axis_extrapolation_method(0, ExtrapolationMethod::linear);
+        interpolator.value().set_axis_extrapolation_method(0, ExtrapolationMethod::linear);
     }
 };
 
@@ -90,7 +90,7 @@ class Function2DFixture : public FunctionFixture {
   protected:
     Function2DFixture()
     {
-        grid = {{2.0, 7.0}, {1.0, 2.0, 3.0}};
+        grid = {GridAxis({2.0, 7.0}), GridAxis({1.0, 2.0, 3.0})};
         functions = {[](std::vector<double> x) -> double { return x[0] * x[1]; }};
         setup();
     }
@@ -101,11 +101,11 @@ class Function4DFixture : public FunctionFixture {
     Function4DFixture()
     {
         const std::size_t number_of_axes = 4;
-        grid.resize(number_of_axes);
+        grid.reserve(number_of_axes);
 
         std::size_t axis_len = 10; // could easily change to vector of lengths
         for (std::size_t i = 0; i < number_of_axes; i++) {
-            grid[i] = linspace(0.0, 4.5, axis_len);
+            grid.emplace_back(GridAxis(linspace(0.0, 4.5, axis_len)));
         }
 
         functions = {

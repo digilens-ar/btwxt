@@ -47,23 +47,6 @@ RegularGridInterpolatorImplementation::RegularGridInterpolatorImplementation(
     }
 }
 
-std::size_t RegularGridInterpolatorImplementation::add_grid_point_data_set(
-    const GridPointDataSet& grid_point_data_set)
-{
-    check_grid_point_data_set_size(grid_point_data_set);
-    grid_point_data_sets.emplace_back(grid_point_data_set);
-    number_of_grid_point_data_sets++;
-    temporary_grid_point_data.resize(number_of_grid_point_data_sets);
-    results.resize(number_of_grid_point_data_sets);
-    hypercube_grid_point_data.resize(hypercube.size(),
-                                     std::vector<double>(number_of_grid_point_data_sets));
-    hypercube_cache.clear();
-    if (target_is_set) {
-        set_results();
-    }
-    return number_of_grid_point_data_sets - 1; // Returns index of new data set
-}
-
 void RegularGridInterpolatorImplementation::set_target(const std::vector<double>& target_in)
 {
     if (target_in.size() != number_of_grid_axes) {
@@ -93,13 +76,6 @@ const std::vector<double>& RegularGridInterpolatorImplementation::get_target() c
     return target;
 }
 
-void RegularGridInterpolatorImplementation::clear_target()
-{
-    target_is_set = false;
-    target = std::vector<double>(number_of_grid_axes, 0.);
-    results = std::vector<double>(number_of_grid_axes, 0.);
-}
-
 std::vector<double> RegularGridInterpolatorImplementation::get_results() const
 {
     if (number_of_grid_point_data_sets == 0u) {
@@ -109,13 +85,6 @@ std::vector<double> RegularGridInterpolatorImplementation::get_results() const
          throw std::runtime_error("Results were requested, but no target has been set.");
     }
     return results;
-}
-
-std::vector<double>
-RegularGridInterpolatorImplementation::get_results(const std::vector<double>& target_in)
-{
-    set_target(target_in);
-    return get_results();
 }
 
 void RegularGridInterpolatorImplementation::normalize_grid_point_data_sets_at_target(
@@ -155,7 +124,7 @@ void RegularGridInterpolatorImplementation::normalize_grid_point_data_set(
     std::size_t data_set_index, double scalar)
 {
     check_data_set_index(data_set_index, "normalize grid point data set");
-    auto& data_set = grid_point_data_sets[data_set_index].data;
+    auto& data_set = grid_point_data_sets[data_set_index];
     if (scalar == 0.0) {
          throw std::runtime_error(std::format("GridPointDataSet '{}': Attempt to normalize grid point data set by zero.",
                         data_set_index));
@@ -171,7 +140,7 @@ const std::vector<double>&
 RegularGridInterpolatorImplementation::get_grid_point_data(std::size_t grid_point_index)
 {
     for (std::size_t i = 0; i < number_of_grid_point_data_sets; ++i) {
-        temporary_grid_point_data[i] = grid_point_data_sets[i].data[grid_point_index];
+        temporary_grid_point_data[i] = grid_point_data_sets[i][grid_point_index];
     }
     return temporary_grid_point_data;
 }
@@ -200,19 +169,6 @@ std::vector<Method> RegularGridInterpolatorImplementation::get_interpolation_met
             interpolation_method_map.at(grid_axes[axis_index].get_interpolation_method());
     }
     return interpolation_methods;
-}
-
-std::vector<Method> RegularGridInterpolatorImplementation::get_extrapolation_methods() const
-{
-    std::vector<Method> extrapolation_methods(number_of_grid_axes);
-    static const std::unordered_map<ExtrapolationMethod, Method> extrapolation_method_map {
-        {ExtrapolationMethod::constant, Method::constant},
-        {ExtrapolationMethod::linear, Method::linear}};
-    for (std::size_t axis_index = 0; axis_index < number_of_grid_axes; axis_index++) {
-        extrapolation_methods[axis_index] =
-            extrapolation_method_map.at(grid_axes[axis_index].get_extrapolation_method());
-    }
-    return extrapolation_methods;
 }
 
 std::size_t RegularGridInterpolatorImplementation::get_grid_point_index(
@@ -262,21 +218,15 @@ std::vector<std::size_t> RegularGridInterpolatorImplementation::get_neighboring_
     return neighbor_indices;
 }
 
-std::vector<std::size_t> RegularGridInterpolatorImplementation::get_neighboring_indices_at_target(
-    const std::vector<double>& target_in)
-{
-    set_target(target_in);
-    return get_neighboring_indices_at_target();
-}
 // private methods
 
 void RegularGridInterpolatorImplementation::check_grid_point_data_set_size(
     const GridPointDataSet& grid_point_data_set)
 {
-    if (grid_point_data_set.data.size() != number_of_grid_points) {
+    if (grid_point_data_set.size() != number_of_grid_points) {
          throw std::runtime_error(std::format(
             "GridPointDataSet: Size ({}) does not match number of grid points ({}).",
-            grid_point_data_set.data.size(),
+            grid_point_data_set.size(),
             number_of_grid_points));
     }
 }
@@ -408,7 +358,16 @@ void RegularGridInterpolatorImplementation::consolidate_methods()
     previous_methods = methods;
     methods = get_interpolation_methods();
     if (target_is_set) {
-        auto extrapolation_methods = get_extrapolation_methods();
+        // get extrapolation methods
+         std::vector<Method> extrapolation_methods(number_of_grid_axes);
+        static const std::unordered_map<ExtrapolationMethod, Method> extrapolation_method_map {
+            {ExtrapolationMethod::constant, Method::constant},
+            {ExtrapolationMethod::linear, Method::linear}};
+        for (std::size_t axis_index = 0; axis_index < number_of_grid_axes; axis_index++) {
+            extrapolation_methods[axis_index] =
+                extrapolation_method_map.at(grid_axes[axis_index].get_extrapolation_method());
+        }
+
         constexpr std::string_view error_format {
             "GridAxis '{}': The target ({:.6g}) is {} the extrapolation "
             "limit ({:.6g})."};
