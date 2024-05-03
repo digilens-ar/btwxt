@@ -27,9 +27,6 @@ enum class TargetBoundsStatus {
 // this will be the public-facing class.
 class RegularGridInterpolator {
   public:
-    explicit RegularGridInterpolator(
-        const std::vector<GridAxis>& grid_axes);
-
     RegularGridInterpolator(
         const std::vector<GridAxis>& grid_axes,
         const std::vector<GridPointDataSet>& grid_point_data_sets);
@@ -48,15 +45,15 @@ class RegularGridInterpolator {
                                        const std::pair<double, double>& extrapolation_limits);
 
     // Public getters
-    std::size_t get_number_of_dimensions();
+    std::size_t get_number_of_dimensions() const;
 
-    std::size_t get_number_of_grid_points();
+    std::size_t get_number_of_grid_points() const;
 
-    std::size_t get_number_of_grid_point_data_sets();
+    std::size_t get_number_of_grid_point_data_sets() const;
 
-    const GridPointDataSet& get_grid_point_data_set(std::size_t data_set_index);
+    const GridPointDataSet& get_grid_point_data_set(std::size_t data_set_index) const;
 
-    const GridAxis& get_grid_axis(std::size_t axis_index);
+    const GridAxis& get_grid_axis(std::size_t axis_index) const;
 
     // Public normalization methods
     double normalize_grid_point_data_set_at_target(std::size_t data_set_index, double scalar = 1.0);
@@ -66,13 +63,13 @@ class RegularGridInterpolator {
     // Get results
     void set_target(const std::vector<double>& target);
 
-    double get_value_at_target(std::size_t data_set_index);
+    double get_value_at_target(std::size_t data_set_index) const;
 
-    std::vector<double> get_values_at_target();
+    std::vector<double> get_values_at_target() const;
 
     [[nodiscard]] std::vector<std::size_t> get_neighboring_indices_at_target() const;
 
-    const std::vector<double>& get_target();
+    const std::vector<double>& get_target() const;
 
     [[nodiscard]] const std::vector<TargetBoundsStatus>& get_target_bounds_status() const;
 
