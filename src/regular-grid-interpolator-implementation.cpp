@@ -155,7 +155,7 @@ void RegularGridInterpolatorImplementation::normalize_grid_point_data_set(
     std::size_t data_set_index, double scalar)
 {
     check_data_set_index(data_set_index, "normalize grid point data set");
-    auto& data_set = grid_point_data_sets[data_set_index].data;
+    auto& data_set = grid_point_data_sets[data_set_index];
     if (scalar == 0.0) {
          throw std::runtime_error(std::format("GridPointDataSet '{}': Attempt to normalize grid point data set by zero.",
                         data_set_index));
@@ -171,7 +171,7 @@ const std::vector<double>&
 RegularGridInterpolatorImplementation::get_grid_point_data(std::size_t grid_point_index)
 {
     for (std::size_t i = 0; i < number_of_grid_point_data_sets; ++i) {
-        temporary_grid_point_data[i] = grid_point_data_sets[i].data[grid_point_index];
+        temporary_grid_point_data[i] = grid_point_data_sets[i][grid_point_index];
     }
     return temporary_grid_point_data;
 }
@@ -273,10 +273,10 @@ std::vector<std::size_t> RegularGridInterpolatorImplementation::get_neighboring_
 void RegularGridInterpolatorImplementation::check_grid_point_data_set_size(
     const GridPointDataSet& grid_point_data_set)
 {
-    if (grid_point_data_set.data.size() != number_of_grid_points) {
+    if (grid_point_data_set.size() != number_of_grid_points) {
          throw std::runtime_error(std::format(
             "GridPointDataSet: Size ({}) does not match number of grid points ({}).",
-            grid_point_data_set.data.size(),
+            grid_point_data_set.size(),
             number_of_grid_points));
     }
 }

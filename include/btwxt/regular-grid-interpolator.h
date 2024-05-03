@@ -9,9 +9,10 @@
 
 // btwxt
 #include "grid-axis.h"
-#include "grid-point-data.h"
 
 namespace Btwxt {
+
+using GridPointDataSet = std::vector<double>; // Data corresponding to all points within a collection of grid axes. Length of data should equal the total number of permutations of grid axes points.
 
 class RegularGridInterpolatorImplementation;
 
@@ -29,22 +30,7 @@ class RegularGridInterpolator {
     RegularGridInterpolator();
 
     explicit RegularGridInterpolator(
-        const std::vector<std::vector<double>>& grid_axis_vectors);
-
-    RegularGridInterpolator(
-        const std::vector<std::vector<double>>& grid_axis_vectors,
-        const std::vector<std::vector<double>>& grid_point_data_vectors);
-
-    explicit RegularGridInterpolator(
         const std::vector<GridAxis>& grid_axes);
-
-    RegularGridInterpolator(
-        const std::vector<GridAxis>& grid_axes,
-        const std::vector<std::vector<double>>& grid_point_data_vectors);
-
-    RegularGridInterpolator(
-        const std::vector<std::vector<double>>& grid_axis_vectors,
-        const std::vector<GridPointDataSet>& grid_point_data_sets);
 
     RegularGridInterpolator(
         const std::vector<GridAxis>& grid_axes,
@@ -55,8 +41,6 @@ class RegularGridInterpolator {
     RegularGridInterpolator(const RegularGridInterpolator& source);
 
     RegularGridInterpolator& operator=(const RegularGridInterpolator& source);
-
-    std::size_t add_grid_point_data_set(const std::vector<double>& grid_point_data_vector);
 
     std::size_t add_grid_point_data_set(const GridPointDataSet& grid_point_data_set);
 

@@ -21,10 +21,11 @@ TEST_F(FunctionFixture, scipy_3d_grid)
 {
     // Based on
     // https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.RegularGridInterpolator.html
-    grid.resize(3);
-    grid[0] = linspace(1, 4, 11);
-    grid[1] = linspace(4, 7, 22);
-    grid[2] = linspace(7, 9, 33);
+    grid = {
+        GridAxis(linspace(1, 4, 11)),
+        GridAxis(linspace(4, 7, 22)),
+        GridAxis(linspace(7, 9, 33))
+    };
 
     functions = {[](std::vector<double> x) -> double {
         return 2 * x[0] * x[0] * x[0] + 3 * x[1] * x[1] - x[2];
@@ -50,9 +51,7 @@ TEST_F(FunctionFixture, scipy_2d_grid)
 {
     // Based on
     // https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.RegularGridInterpolator.html
-    grid.resize(2);
-    grid[0] = {-2, 0, 4};
-    grid[1] = {-2, 0, 2, 5};
+    grid = { GridAxis({-2, 0, 4}), GridAxis({-2, 0, 2, 5}) };
 
     functions = {[](std::vector<double> x) -> double { return x[0] * x[0] + x[1] * x[1]; }};
     setup();
@@ -83,26 +82,10 @@ TEST_F(FunctionFixture, scipy_2d_grid)
     }
 }
 
-TEST(Constructors, test_all_constructors)
-{
-
-    // grid_axis_vectors, no grid point data
-    RegularGridInterpolator rgi1(std::vector<std::vector<double>> {{1}});
-
-    // grid_axes, no grid point data
-    RegularGridInterpolator rgi2({GridAxis({1})});
-
-    // grid_axes, grid_point_data_vectors
-    RegularGridInterpolator rgi3({GridAxis({1})}, std::vector<std::vector<double>> {{1}});
-
-    // grid_axis_vectors, grid point data
-    RegularGridInterpolator rgi4(std::vector<std::vector<double>> {{1}}, {GridPointDataSet({1})});
-}
-
 TEST_F(GridFixture, four_point_1d_cubic_interpolate)
 {
 
-    grid = {{0, 2, 5, 10}};
+    grid = {GridAxis({0, 2, 5, 10})};
     data_sets = {{6, 5, 4, 3}};
     target = {2.5};
     setup();
@@ -125,7 +108,7 @@ TEST_F(GridFixture, empty_grid_throw_test)
 
 TEST_F(GridFixture, single_point_1d_extrapolate)
 {
-    grid = {{2.}};
+    grid = {GridAxis({2.})};
     data_sets = {{5.}};
     target = {2.5};
     setup();
@@ -136,7 +119,7 @@ TEST_F(GridFixture, single_point_1d_extrapolate)
 
 TEST_F(GridFixture, grid_axis_error)
 {
-    grid = {{1., 2.}};
+    grid = {GridAxis({1., 2.})};
     data_sets = {{5., 5.}};
     target = {2.5};
     setup();
@@ -145,7 +128,7 @@ TEST_F(GridFixture, grid_axis_error)
 
 TEST_F(GridFixture, two_point_cubic_1d_interpolate)
 {
-    grid = {{0, 10}};
+    grid = {GridAxis({0, 10})};
     data_sets = {{6, 3}};
     target = {2.5};
     setup();
@@ -156,7 +139,7 @@ TEST_F(GridFixture, two_point_cubic_1d_interpolate)
 
 TEST_F(GridFixture, get_neighboring_indices)
 {
-    grid = {{0, 1, 2}, {0, 1, 2}};
+    grid = {GridAxis({0, 1, 2}), GridAxis({0, 1, 2})};
 
     // data_set[i] = i useful for testing
     // clang-format off
@@ -213,8 +196,8 @@ TEST_F(GridFixture, get_neighboring_indices)
                 testing::ElementsAre(4, 5, 7, 8));
 
     // On grid points
-    for (auto g0 : grid[0]) {
-        for (auto g1 : grid[1]) {
+    for (auto g0 : grid[0].get_values()) {
+        for (auto g1 : grid[1].get_values()) {
             interpolator.set_target({g0, g1});
             EXPECT_THAT(interpolator.get_neighboring_indices_at_target(),
                         testing::ElementsAre(interpolator.get_values_at_target()[0]));
@@ -348,7 +331,7 @@ TEST_F(Function2DFixture, normalization_return_compound_scalar)
 
 TEST(SimpleData, normalize_after_adding_grid_point_data_set)
 {
-    std::vector<std::vector<double>> grid {{0., 1.}, {0., 1.}};
+    std::vector<GridAxis> grid {GridAxis({0., 1.}), GridAxis({0., 1.})};
     std::vector<std::vector<double>> data_sets {{0.0, 1.75, 1.75, 3.5}, {89., 89., 89., 89.}};
     RegularGridInterpolator interpolator(grid);
     std::size_t data_set_index {0};
@@ -369,9 +352,9 @@ TEST(SimpleData, normalize_after_adding_grid_point_data_set)
               interpolator.get_grid_axis(0).get_length() *
                   interpolator.get_grid_axis(1).get_length());
     EXPECT_EQ(interpolator.get_number_of_grid_points(),
-              interpolator.get_grid_point_data_set(0).data.size());
+              interpolator.get_grid_point_data_set(0).size());
     EXPECT_EQ(interpolator.get_number_of_grid_points(),
-              interpolator.get_grid_point_data_set(1).data.size());
+              interpolator.get_grid_point_data_set(1).size());
 }
 
 TEST_F(Function4DFixture, construct)

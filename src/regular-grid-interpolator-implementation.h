@@ -6,7 +6,6 @@
 #include <map>
 #include <vector>
 #include <string>
-#include "btwxt/grid-point-data.h"
 #include "btwxt/regular-grid-interpolator.h"
 
 

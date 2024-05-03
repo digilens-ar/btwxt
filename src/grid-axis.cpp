@@ -90,7 +90,7 @@ void GridAxis::set_extrapolation_limits(std::pair<double, double> limits)
     }
 }
 
-const std::vector<double>& GridAxis::get_cubic_spacing_ratios(bool floor_or_ceiling) const
+const std::vector<double>& GridAxis::get_cubic_spacing_ratios(size_t floor_or_ceiling) const
 {
     return cubic_spacing_ratios[floor_or_ceiling];
 }

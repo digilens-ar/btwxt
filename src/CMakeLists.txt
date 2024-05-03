@@ -12,7 +12,7 @@ target_sources(btwxt PUBLIC
     FILE_SET public_headers
     TYPE HEADERS
     BASE_DIRS "${PROJECT_SOURCE_DIR}/include"
-    FILES "${PROJECT_SOURCE_DIR}/include/btwxt/btwxt.h" "${PROJECT_SOURCE_DIR}/include/btwxt/grid-axis.h" "${PROJECT_SOURCE_DIR}/include/btwxt/grid-point-data.h" "${PROJECT_SOURCE_DIR}/include/btwxt/regular-grid-interpolator.h"
+    FILES "${PROJECT_SOURCE_DIR}/include/btwxt/btwxt.h" "${PROJECT_SOURCE_DIR}/include/btwxt/grid-axis.h"  "${PROJECT_SOURCE_DIR}/include/btwxt/regular-grid-interpolator.h"
 )
 
 include(CMakePackageConfigHelpers)

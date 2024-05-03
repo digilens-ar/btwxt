@@ -34,42 +34,9 @@ std::vector<GridPointDataSet> construct_grid_point_data_sets(const std::vector<s
 
 RegularGridInterpolator::RegularGridInterpolator() = default;
 
-RegularGridInterpolator::RegularGridInterpolator(
-    const std::vector<std::vector<double>>& grid_axis_vectors)
-    : RegularGridInterpolator(construct_grid_axes(grid_axis_vectors),
-                              std::vector<GridPointDataSet>())
-{
-}
-
-RegularGridInterpolator::RegularGridInterpolator(
-    const std::vector<std::vector<double>>& grid_axis_vectors,
-    const std::vector<std::vector<double>>& grid_point_data_vectors)
-    : RegularGridInterpolator(construct_grid_axes(grid_axis_vectors),
-                              construct_grid_point_data_sets(grid_point_data_vectors))
-{
-}
-
 RegularGridInterpolator::RegularGridInterpolator(const std::vector<GridAxis>& grid)
     : implementation(
           std::make_unique<RegularGridInterpolatorImplementation>(grid, std::vector<GridPointDataSet>{}))
-{
-}
-
-RegularGridInterpolator::RegularGridInterpolator(
-    const std::vector<GridAxis>& grid_axes,
-    const std::vector<std::vector<double>>& grid_point_data_vectors)
-    : implementation(std::make_unique<RegularGridInterpolatorImplementation>(
-          grid_axes,
-          construct_grid_point_data_sets(grid_point_data_vectors)))
-{
-}
-
-RegularGridInterpolator::RegularGridInterpolator(
-    const std::vector<std::vector<double>>& grid_axis_vectors,
-    const std::vector<GridPointDataSet>& grid_point_data_sets)
-    : implementation(std::make_unique<RegularGridInterpolatorImplementation>(
-          construct_grid_axes(grid_axis_vectors),
-          grid_point_data_sets))
 {
 }
 
@@ -102,13 +69,6 @@ RegularGridInterpolator& RegularGridInterpolator::operator=(const RegularGridInt
 }
 
 // Public manipulation methods
-
-std::size_t
-RegularGridInterpolator::add_grid_point_data_set(const std::vector<double>& grid_point_data_vector)
-{
-    return add_grid_point_data_set(GridPointDataSet(grid_point_data_vector));
-}
-
 std::size_t
 RegularGridInterpolator::add_grid_point_data_set(const GridPointDataSet& grid_point_data_set)
 {

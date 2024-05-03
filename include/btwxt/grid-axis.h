@@ -13,16 +13,11 @@ namespace Btwxt {
 enum class InterpolationMethod { linear, cubic };
 enum class ExtrapolationMethod { constant, linear };
 
-class RegularGridInterpolatorImplementation;
-
 class GridAxis {
     // A single input dimension of the grid
 
-    friend class RegularGridInterpolatorImplementation;
-
   public:
-    // Constructors
-    GridAxis() = default;
+    // GridAxis() = default;
 
     explicit GridAxis(
         std::vector<double> values,
@@ -57,6 +52,7 @@ class GridAxis {
                               // and the ceiling doesn't use the last entry.
 };
 
+
 // free functions
 
 /// @brief Check to see if a vector is valid to be a GridAxis
@@ -90,6 +86,16 @@ std::vector<std::vector<T>> cartesian_product(const std::vector<std::vector<T>>&
         combinations = std::move(r);
     }
     return combinations;
+}
+
+inline std::vector<std::vector<double>> cartesian_product(std::vector<GridAxis> const& axes)
+{
+    std::vector<std::vector<double>> vals;
+    vals.reserve(axes.size());
+    for (auto const& ax : axes) {
+        vals.push_back(ax.get_values());
+    }
+    return cartesian_product<double>(vals);
 }
 
 std::vector<double> linspace(double start, double stop, std::size_t number_of_points);
