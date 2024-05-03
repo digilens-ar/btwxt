@@ -47,23 +47,6 @@ RegularGridInterpolatorImplementation::RegularGridInterpolatorImplementation(
     }
 }
 
-std::size_t RegularGridInterpolatorImplementation::add_grid_point_data_set(
-    const GridPointDataSet& grid_point_data_set)
-{
-    check_grid_point_data_set_size(grid_point_data_set);
-    grid_point_data_sets.emplace_back(grid_point_data_set);
-    number_of_grid_point_data_sets++;
-    temporary_grid_point_data.resize(number_of_grid_point_data_sets);
-    results.resize(number_of_grid_point_data_sets);
-    hypercube_grid_point_data.resize(hypercube.size(),
-                                     std::vector<double>(number_of_grid_point_data_sets));
-    hypercube_cache.clear();
-    if (target_is_set) {
-        set_results();
-    }
-    return number_of_grid_point_data_sets - 1; // Returns index of new data set
-}
-
 void RegularGridInterpolatorImplementation::set_target(const std::vector<double>& target_in)
 {
     if (target_in.size() != number_of_grid_axes) {
@@ -93,13 +76,6 @@ const std::vector<double>& RegularGridInterpolatorImplementation::get_target() c
     return target;
 }
 
-void RegularGridInterpolatorImplementation::clear_target()
-{
-    target_is_set = false;
-    target = std::vector<double>(number_of_grid_axes, 0.);
-    results = std::vector<double>(number_of_grid_axes, 0.);
-}
-
 std::vector<double> RegularGridInterpolatorImplementation::get_results() const
 {
     if (number_of_grid_point_data_sets == 0u) {
@@ -109,13 +85,6 @@ std::vector<double> RegularGridInterpolatorImplementation::get_results() const
          throw std::runtime_error("Results were requested, but no target has been set.");
     }
     return results;
-}
-
-std::vector<double>
-RegularGridInterpolatorImplementation::get_results(const std::vector<double>& target_in)
-{
-    set_target(target_in);
-    return get_results();
 }
 
 void RegularGridInterpolatorImplementation::normalize_grid_point_data_sets_at_target(
@@ -249,12 +218,6 @@ std::vector<std::size_t> RegularGridInterpolatorImplementation::get_neighboring_
     return neighbor_indices;
 }
 
-std::vector<std::size_t> RegularGridInterpolatorImplementation::get_neighboring_indices_at_target(
-    const std::vector<double>& target_in)
-{
-    set_target(target_in);
-    return get_neighboring_indices_at_target();
-}
 // private methods
 
 void RegularGridInterpolatorImplementation::check_grid_point_data_set_size(

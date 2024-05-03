@@ -23,7 +23,6 @@ class RegularGridInterpolatorImplementation {
                                           const std::vector<GridPointDataSet>& grid_point_data_sets);
 
     // Data manipulation and settings
-    std::size_t add_grid_point_data_set(const GridPointDataSet& grid_point_data_set);
 
     void set_axis_interpolation_method(std::size_t axis_index, InterpolationMethod method)
     {
@@ -49,11 +48,7 @@ class RegularGridInterpolatorImplementation {
 
     [[nodiscard]] const std::vector<double>& get_target() const;
 
-    void clear_target();
-
     [[nodiscard]] std::vector<double> get_results() const;
-
-    std::vector<double> get_results(const std::vector<double>& target);
 
     void normalize_grid_point_data_sets_at_target(double scalar = 1.0);
 
@@ -117,8 +112,6 @@ class RegularGridInterpolatorImplementation {
     };
 
     std::vector<std::size_t> get_neighboring_indices_at_target();
-
-    std::vector<std::size_t> get_neighboring_indices_at_target(const std::vector<double>& target);
 
     [[nodiscard]] inline const std::vector<std::vector<double>>&
     get_interpolation_coefficients() const

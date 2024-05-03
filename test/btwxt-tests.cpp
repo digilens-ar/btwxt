@@ -37,12 +37,14 @@ TEST_F(FunctionFixture, scipy_3d_grid)
     double expected_value;
 
     target = {2.1, 6.2, 8.3};
-    result = interpolator.value().get_values_at_target(target)[0];
+    interpolator->set_target(target);
+    result = interpolator.value().get_values_at_target()[0];
     expected_value = 125.80469388; // Interpolated value from example
     EXPECT_NEAR(result, expected_value, epsilon);
 
     target = {3.3, 5.2, 7.1};
-    result = interpolator.value().get_values_at_target(target)[0];
+    interpolator.value().set_target(target);
+    result = interpolator.value().get_values_at_target()[0];
     expected_value = 146.30069388; // Interpolated value from example
     EXPECT_NEAR(result, expected_value, epsilon);
 }
@@ -65,7 +67,8 @@ TEST_F(FunctionFixture, scipy_2d_grid)
     std::vector<std::vector<double>> target_space {test_axis_values1, test_axis_values2};
     auto targets = cartesian_product(target_space);
     for (const auto& t : targets) {
-        double result = interpolator.value().get_values_at_target(t)[0];
+        interpolator.value().set_target(t);
+        double result = interpolator.value().get_values_at_target()[0];
         double expected_value = functions[0](t);
 
         bool extrapolating = false;
@@ -94,7 +97,8 @@ TEST_F(GridFixture, four_point_1d_cubic_interpolate)
 
     const double expected_value = 4.804398;
     const double epsilon = 0.0001;
-    double result = interpolator.value().get_values_at_target(target)[0];
+    interpolator.value().set_target(target);
+    double result = interpolator.value().get_values_at_target()[0];
     EXPECT_NEAR(result, expected_value, epsilon);
 }
 
@@ -113,7 +117,8 @@ TEST_F(GridFixture, single_point_1d_extrapolate)
     target = {2.5};
     setup();
     interpolator.value().set_axis_extrapolation_method(0, ExtrapolationMethod::linear);
-    double result = interpolator.value().get_values_at_target(target)[0];
+    interpolator.value().set_target(target);
+    double result = interpolator.value().get_values_at_target()[0];
     EXPECT_NEAR(result, 5., 0.0001);
 }
 
@@ -133,7 +138,8 @@ TEST_F(GridFixture, two_point_cubic_1d_interpolate)
     target = {2.5};
     setup();
     interpolator.value().set_axis_interpolation_method(0, InterpolationMethod::cubic);
-    double result = interpolator.value().get_values_at_target(target)[0];
+    interpolator.value().set_target(target);
+    double result = interpolator.value().get_values_at_target()[0];
     EXPECT_NEAR(result, 5.25, 0.0001);
 }
 
@@ -153,46 +159,60 @@ TEST_F(GridFixture, get_neighboring_indices)
     setup();
 
     // Outside grid points
-    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target({-1, -1}), testing::ElementsAre(0));
+    auto& interp = interpolator.value();
+    interp.set_target({-1, -1});
+    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target(), testing::ElementsAre(0));
 
-    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target({-1, 0.5}),
-                testing::ElementsAre(0, 1));
+    interp.set_target({-1, 0.5});
+    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target(), testing::ElementsAre(0, 1));
 
-    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target({-1, 3}), testing::ElementsAre(2));
+    interp.set_target({-1, 3});
+    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target(), testing::ElementsAre(2));
 
-    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target({3, 3}), testing::ElementsAre(8));
+    interp.set_target({3, 3});
+    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target(), testing::ElementsAre(8));
 
     // On outside boundaries
-    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target({0, 0.5}),
+    interp.set_target({0, 0.5});
+    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target(),
                 testing::ElementsAre(0, 1));
 
-    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target({0.5, 0}),
+    interp.set_target({0.5, 0});
+    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target(),
                 testing::ElementsAre(0, 3));
 
-    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target({2, 1.5}),
+    interp.set_target({2, 1.5});
+    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target(),
                 testing::ElementsAre(7, 8));
 
-    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target({0.5, 2}),
+    interp.set_target({0.5, 2});
+    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target(),
                 testing::ElementsAre(2, 5));
 
     // On inside boundaries
-    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target({1, 0.5}),
+    interp.set_target({1, 0.5});
+    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target(),
                 testing::ElementsAre(3, 4));
 
-    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target({0.5, 1}),
+    interp.set_target({0.5, 1});
+    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target(),
                 testing::ElementsAre(1, 4));
 
     // Inside cells
-    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target({0.5, 0.5}),
+    interp.set_target({0.5, 0.5});
+    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target(),
                 testing::ElementsAre(0, 1, 3, 4));
 
-    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target({0.5, 1.5}),
+    interp.set_target({0.5, 1.5});
+    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target(),
                 testing::ElementsAre(1, 2, 4, 5));
 
-    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target({1.5, 0.5}),
+    interp.set_target({1.5, 0.5});
+    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target(),
                 testing::ElementsAre(3, 4, 6, 7));
 
-    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target({1.5, 1.5}),
+    interp.set_target({1.5, 1.5});
+    EXPECT_THAT(interpolator.value().get_neighboring_indices_at_target(),
                 testing::ElementsAre(4, 5, 7, 8));
 
     // On grid points
@@ -220,12 +240,6 @@ TEST_F(Grid2DFixture, target_undefined)
     EXPECT_STDOUT(returned_target = interpolator.value().get_target();, empty_out)
     std::vector<double> expected_result {12, 5};
     EXPECT_EQ(returned_target, expected_result);
-
-    // Clear the target; see that it reverts to errors.
-    interpolator.value().clear_target();
-    EXPECT_THROW(interpolator.value().get_target(), std::runtime_error);
-
-    EXPECT_THROW(interpolator.value().get_value_at_target(0), std::runtime_error);
 }
 
 TEST_F(Grid2DFixture, interpolate)
@@ -241,10 +255,11 @@ TEST_F(Grid2DFixture, interpolate)
 
     std::vector<double> another_target = {8.1, 4.2};
     // All values, fresh target
-    result = interpolator.value().get_values_at_target(another_target);
+    interpolator.value().set_target(another_target);
+    result = interpolator.value().get_values_at_target();
     EXPECT_THAT(result, testing::ElementsAre(testing::DoubleEq(3.189), testing::DoubleEq(6.378)));
     // Single value, fresh target
-    d_result = interpolator.value().get_value_at_target(another_target, 1);
+    d_result = interpolator.value().get_value_at_target(1);
     EXPECT_DOUBLE_EQ(d_result, 6.378);
 }
 
@@ -252,12 +267,14 @@ TEST_F(Grid2DFixture, extrapolate)
 {
     // axis1 is designated constant extrapolation
     target = {10, 3};
-    std::vector<double> result = interpolator.value().get_values_at_target(target);
+    interpolator.value().set_target(target);
+    std::vector<double> result = interpolator.value().get_values_at_target();
     EXPECT_THAT(result, testing::ElementsAre(testing::DoubleEq(2), testing::DoubleEq(4)));
 
     // axis0 is designated linear extrapolation
     target = {18, 5};
-    result = interpolator.value().get_values_at_target(target);
+    interpolator.value().set_target(target);
+    result = interpolator.value().get_values_at_target();
     EXPECT_THAT(result, testing::ElementsAre(testing::DoubleEq(1.8), testing::DoubleEq(3.6)));
 }
 
@@ -268,12 +285,6 @@ TEST_F(Grid2DFixture, invalid_inputs)
 
     std::vector<double> long_target = {1, 2, 3};
     EXPECT_THROW(interpolator.value().set_target(long_target), std::runtime_error);
-
-    std::vector<double> data_set_too_short = {6, 3, 2, 8, 4};
-    EXPECT_THROW(interpolator.value().add_grid_point_data_set(data_set_too_short);, std::runtime_error);
-
-    std::vector<double> data_set_too_long = {1, 1, 1, 1, 1, 1, 1};
-    EXPECT_THROW(interpolator.value().add_grid_point_data_set(data_set_too_long);, std::runtime_error);
 
 }
 
@@ -294,8 +305,8 @@ TEST_F(Grid2DFixture, normalize)
     interpolator.value().set_axis_interpolation_method(1, InterpolationMethod::cubic);
 
     // All values, current target
-    interpolator.value().normalize_grid_point_data_sets_at_target(
-        target); // normalize first grid point data set
+    interpolator.value().set_target(target);
+    interpolator.value().normalize_grid_point_data_sets_at_target(); // normalize first grid point data set
     std::vector<double> result = interpolator.value().get_values_at_target();
     EXPECT_THAT(result, testing::ElementsAre(testing::DoubleEq(1.0), testing::DoubleEq(1.0)));
 }
@@ -306,8 +317,8 @@ TEST_F(Function2DFixture, normalization_return_scalar)
     std::vector<double> normalization_target = {2.0, 3.0};
     double expected_divisor {functions[0](normalization_target)};
     double expected_value_at_target {functions[0](target) / expected_divisor};
-    double return_scalar =
-        interpolator.value().normalize_grid_point_data_set_at_target(0, normalization_target, 1.0);
+    interpolator.value().set_target(normalization_target);
+    double return_scalar = interpolator.value().normalize_grid_point_data_set_at_target(0, 1.0);
     interpolator.value().set_target(target);
     std::vector<double> results = interpolator.value().get_values_at_target();
     EXPECT_THAT(return_scalar, testing::DoubleEq(expected_divisor));
@@ -321,40 +332,12 @@ TEST_F(Function2DFixture, normalization_return_compound_scalar)
     double normalization_divisor = 4.0;
     double expected_compound_divisor {functions[0](normalization_target) * normalization_divisor};
     double expected_value_at_target {functions[0](target) / expected_compound_divisor};
-    double return_scalar = interpolator.value().normalize_grid_point_data_set_at_target(
-        0, normalization_target, normalization_divisor);
+    interpolator.value().set_target(normalization_target);
+    double return_scalar = interpolator.value().normalize_grid_point_data_set_at_target(0, normalization_divisor);
     interpolator.value().set_target(target);
     std::vector<double> results = interpolator.value().get_values_at_target();
     EXPECT_THAT(return_scalar, testing::DoubleEq(expected_compound_divisor));
     EXPECT_THAT(results, testing::ElementsAre(expected_value_at_target));
-}
-
-TEST(SimpleData, normalize_after_adding_grid_point_data_set)
-{
-    std::vector<GridAxis> grid {GridAxis({0., 1.}), GridAxis({0., 1.})};
-    std::vector<std::vector<double>> data_sets {{0.0, 1.75, 1.75, 3.5}, {89., 89., 89., 89.}};
-    RegularGridInterpolator interpolator(grid);
-    std::size_t data_set_index {0};
-    interpolator.add_grid_point_data_set(data_sets[data_set_index]);
-    EXPECT_EQ(interpolator.get_number_of_grid_point_data_sets(), 1);
-    interpolator.normalize_grid_point_data_set_at_target(data_set_index, {0.5, 0.5}, 1.0);
-    data_set_index++;
-    interpolator.add_grid_point_data_set(data_sets[data_set_index]);
-    EXPECT_EQ(interpolator.get_number_of_grid_point_data_sets(), 2);
-    interpolator.normalize_grid_point_data_set_at_target(data_set_index, {0.5, 0.5}, 1.0);
-    auto results = interpolator.get_values_at_target({1., 1.});
-    EXPECT_NEAR(results[0], 2.0, 0.00001);
-    EXPECT_NEAR(results[1], 1.0, 0.00001);
-
-    // Test other getters
-    EXPECT_EQ(interpolator.get_number_of_dimensions(), 2);
-    EXPECT_EQ(interpolator.get_number_of_grid_points(),
-              interpolator.get_grid_axis(0).get_length() *
-                  interpolator.get_grid_axis(1).get_length());
-    EXPECT_EQ(interpolator.get_number_of_grid_points(),
-              interpolator.get_grid_point_data_set(0).size());
-    EXPECT_EQ(interpolator.get_number_of_grid_points(),
-              interpolator.get_grid_point_data_set(1).size());
 }
 
 TEST_F(Function4DFixture, construct)
@@ -454,7 +437,8 @@ TEST_F(Function4DFixture, multi_timer)
         // Get starting time point
         auto start = std::chrono::high_resolution_clock::now();
         for (const auto& target : set_of_targets) {
-            std::vector<double> result = interpolator.value().get_values_at_target(target);
+            interpolator.value().set_target(target);
+            std::vector<double> result = interpolator.value().get_values_at_target();
         }
         // Get ending time point
         auto stop = std::chrono::high_resolution_clock::now();

@@ -40,8 +40,6 @@ class RegularGridInterpolator {
 
     RegularGridInterpolator& operator=(const RegularGridInterpolator& source);
 
-    std::size_t add_grid_point_data_set(const GridPointDataSet& grid_point_data_set);
-
     void set_axis_extrapolation_method(std::size_t axis_index, ExtrapolationMethod method);
 
     void set_axis_interpolation_method(std::size_t axis_index, InterpolationMethod method);
@@ -63,35 +61,20 @@ class RegularGridInterpolator {
     // Public normalization methods
     double normalize_grid_point_data_set_at_target(std::size_t data_set_index, double scalar = 1.0);
 
-    double normalize_grid_point_data_set_at_target(std::size_t data_set_index,
-                                                   const std::vector<double>& target,
-                                                   double scalar = 1.0);
-
     void normalize_grid_point_data_sets_at_target(double scalar = 1.0);
-
-    void normalize_grid_point_data_sets_at_target(const std::vector<double>& target,
-                                                  double scalar = 1.0);
 
     // Get results
     void set_target(const std::vector<double>& target);
 
-    double get_value_at_target(const std::vector<double>& target, std::size_t data_set_index);
-
     double get_value_at_target(std::size_t data_set_index);
-
-    std::vector<double> get_values_at_target(const std::vector<double>& target);
 
     std::vector<double> get_values_at_target();
 
     [[nodiscard]] std::vector<std::size_t> get_neighboring_indices_at_target() const;
 
-    std::vector<std::size_t> get_neighboring_indices_at_target(const std::vector<double>& target);
-
     const std::vector<double>& get_target();
 
     [[nodiscard]] const std::vector<TargetBoundsStatus>& get_target_bounds_status() const;
-
-    void clear_target();
 
   private:
     std::unique_ptr<RegularGridInterpolatorImplementation> implementation;

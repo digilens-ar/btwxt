@@ -40,11 +40,13 @@ TEST_F(CubicImplementationFixture, switch_interp_method)
     for (auto i = 0u; i < interpolator.get_number_of_grid_axes(); i++) {
         interpolator.set_axis_interpolation_method(i, InterpolationMethod::cubic);
     }
-    std::vector<double> result1 = interpolator.get_results(target);
+    interpolator.set_target(target);
+    std::vector<double> result1 = interpolator.get_results();
     for (auto i = 0u; i < interpolator.get_number_of_grid_axes(); i++) {
         interpolator.set_axis_interpolation_method(i, InterpolationMethod::linear);
     }
-    std::vector<double> result2 = interpolator.get_results(target);
+    interpolator.set_target(target); // TODO this shouldn't be necesary but if we don't do this then the changes to the interpolation method won't be taken into account
+    std::vector<double> result2 = interpolator.get_results();
     EXPECT_NE(result1, result2);
 }
 
@@ -151,21 +153,6 @@ TEST_F(CubicImplementationFixture, get_cubic_spacing_ratios)
     }
 }
 
-TEST_F(CubicImplementationFixture, null_checking_calculations)
-{
-    std::vector<double> table_with_null = {
-        std::numeric_limits<double>::quiet_NaN(), 3, 1.5, 1, 5, 4, 2, 1, 8, 6, 3, 2, 10, 8, 4, 2};
-
-    GridPointDataSet dataset_with_null(table_with_null);
-    interpolator.add_grid_point_data_set(dataset_with_null);
-
-    target = {7, 3};
-    interpolator.set_target(target);
-    auto result = interpolator.get_results();
-    EXPECT_TRUE(std::isnan(result[2]));
-}
-
-
 TEST_F(Grid2DImplementationFixture, grid_point_basics)
 {
     interpolator.set_target(target);
@@ -213,34 +200,6 @@ TEST_F(Grid2DImplementationFixture, interpolation_coefficients)
 
     EXPECT_EQ(interpolator.get_cubic_slope_coefficients()[0][0], 0);
     EXPECT_EQ(interpolator.get_cubic_slope_coefficients()[1][1], 0);
-}
-
-TEST_F(Grid2DImplementationFixture, construct_from_axes)
-{
-    GridAxis ax0 = GridAxis({0, 10, 15},
-                            InterpolationMethod::linear,
-                            ExtrapolationMethod::constant,
-                            {-DBL_MAX, DBL_MAX});
-    GridAxis ax1 = GridAxis({4, 6},
-                            InterpolationMethod::linear,
-                            ExtrapolationMethod::constant,
-                            {-DBL_MAX, DBL_MAX});
-    std::vector<GridAxis> test_axes = {ax0, ax1};
-    interpolator = RegularGridInterpolatorImplementation(test_axes, {});
-    EXPECT_EQ(interpolator.get_number_of_grid_axes(), 2u);
-    EXPECT_EQ(interpolator.get_number_of_grid_point_data_sets(), 0u);
-    EXPECT_THAT(interpolator.get_grid_axis_lengths(), testing::ElementsAre(3, 2));
-
-    interpolator.add_grid_point_data_set(GridPointDataSet(data_sets[0]));
-    EXPECT_EQ(interpolator.get_number_of_grid_point_data_sets(), 1u);
-    std::vector<std::size_t> coords {1, 1};
-    EXPECT_THAT(interpolator.get_grid_point_data(coords), testing::ElementsAre(8));
-
-    interpolator = RegularGridInterpolatorImplementation(
-        test_axes, construct_grid_point_data_sets(data_sets));
-    EXPECT_EQ(interpolator.get_number_of_grid_axes(), 2u);
-    EXPECT_EQ(interpolator.get_number_of_grid_point_data_sets(), 2u);
-    EXPECT_THAT(interpolator.get_grid_point_data(coords), testing::ElementsAre(8, 16));
 }
 
 TEST_F(Grid2DImplementationFixture, get_grid_axis)
