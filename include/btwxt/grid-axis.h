@@ -33,44 +33,28 @@ class GridAxis {
     // Setters
     void set_interpolation_method(InterpolationMethod interpolation_method_in);
     void set_extrapolation_method(ExtrapolationMethod extrapolation_method_in);
-    void set_extrapolation_limits(std::pair<double, double> limits)
-    {
-        extrapolation_limits = limits;
-        check_extrapolation_limits();
-    }
+    void set_extrapolation_limits(std::pair<double, double> limits);
 
     // Getters
     [[nodiscard]] const std::vector<double>& get_values() const { return values; }
     [[nodiscard]] std::size_t get_length() const { return values.size(); }
-    [[nodiscard]] InterpolationMethod get_interpolation_method() const
-    {
-        return interpolation_method;
-    }
-    [[nodiscard]] ExtrapolationMethod get_extrapolation_method() const
-    {
-        return extrapolation_method;
-    }
-    [[nodiscard]] std::pair<double, double> get_extrapolation_limits() const
-    {
-        return extrapolation_limits;
-    }
+    [[nodiscard]] InterpolationMethod get_interpolation_method() const{ return interpolation_method; }
+    [[nodiscard]] ExtrapolationMethod get_extrapolation_method() const { return extrapolation_method; }
+    [[nodiscard]] std::pair<double, double> get_extrapolation_limits() const { return extrapolation_limits; }
 
     [[nodiscard]] const std::vector<double>&
     get_cubic_spacing_ratios(std::size_t floor_or_ceiling) const;
 
   private:
     std::vector<double> values;
-    InterpolationMethod interpolation_method {InterpolationMethod::linear};
-    ExtrapolationMethod extrapolation_method {ExtrapolationMethod::constant};
+    InterpolationMethod interpolation_method = InterpolationMethod::linear;
+    ExtrapolationMethod extrapolation_method = ExtrapolationMethod::constant;
     std::pair<double, double> extrapolation_limits {-DBL_MAX, DBL_MAX};
     std::vector<std::vector<double>>
         cubic_spacing_ratios; // Used for cubic interpolation. Outer vector is size 2: 0: spacing
                               // for the floor, 1: spacing for the ceiling. Inner vector is length
                               // of axis values, but the floor vector doesn't use the first entry
                               // and the ceiling doesn't use the last entry.
-    void calculate_cubic_spacing_ratios();
-    void check_grid_sorted();
-    void check_extrapolation_limits();
 };
 
 // free functions

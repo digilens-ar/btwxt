@@ -21,18 +21,37 @@ GridAxis::GridAxis(std::vector<double> values_in,
     if (values.empty()) {
         throw std::runtime_error("Cannot create grid axis from a zero-length vector.");
     }
-    check_grid_sorted();
-    check_extrapolation_limits();
-    if (interpolation_method == InterpolationMethod::cubic) {
-        calculate_cubic_spacing_ratios();
+    if (!vector_is_valid(values)) {
+        throw std::runtime_error("Values are not sorted, or have duplicates.");
     }
+    set_extrapolation_limits(extrapolation_limits);
+    set_interpolation_method(interpolation_method);
 }
 
 void GridAxis::set_interpolation_method(InterpolationMethod interpolation_method_in)
 {
     interpolation_method = interpolation_method_in;
     if (interpolation_method_in == InterpolationMethod::cubic) {
-        calculate_cubic_spacing_ratios();
+        //calculate_cubic_spacing_ratios
+        if (get_length() == 1) {
+            interpolation_method = InterpolationMethod::linear;
+            spdlog::warn("A cubic interpolation method is not valid for grid axis with only one value. "
+                         "Interpolation method reset to linear.");
+        }
+        if (interpolation_method == InterpolationMethod::linear) {
+            return;
+        }
+        static constexpr std::size_t floor = 0;
+        static constexpr std::size_t ceiling = 1;
+        for (std::size_t i = 0; i < values.size() - 1; i++) {
+            double center_spacing = values[i + 1] - values[i];
+            if (i != 0) {
+                cubic_spacing_ratios[floor][i] = center_spacing / (values[i + 1] - values[i - 1]);
+            }
+            if (i + 2 != values.size()) {
+                cubic_spacing_ratios[ceiling][i] = center_spacing / (values[i + 2] - values[i]);
+            }
+        }
     }
 }
 
@@ -56,58 +75,26 @@ void GridAxis::set_extrapolation_method(ExtrapolationMethod extrapolation_method
     extrapolation_method = extrapolation_method_in;
 }
 
-void GridAxis::calculate_cubic_spacing_ratios()
+void GridAxis::set_extrapolation_limits(std::pair<double, double> limits)
 {
-    if (get_length() == 1) {
-        interpolation_method = InterpolationMethod::linear;
-        spdlog::warn("A cubic interpolation method is not valid for grid axis with only one value. "
-                     "Interpolation method reset to linear.");
-    }
-    if (interpolation_method == InterpolationMethod::linear) {
-        return;
-    }
-    static constexpr std::size_t floor = 0;
-    static constexpr std::size_t ceiling = 1;
-    for (std::size_t i = 0; i < values.size() - 1; i++) {
-        double center_spacing = values[i + 1] - values[i];
-        if (i != 0) {
-            cubic_spacing_ratios[floor][i] = center_spacing / (values[i + 1] - values[i - 1]);
-        }
-        if (i + 2 != values.size()) {
-            cubic_spacing_ratios[ceiling][i] = center_spacing / (values[i + 2] - values[i]);
-        }
-    }
-}
-
-const std::vector<double>&
-GridAxis::get_cubic_spacing_ratios(const std::size_t floor_or_ceiling) const
-{
-    return cubic_spacing_ratios[floor_or_ceiling];
-}
-
-void GridAxis::check_grid_sorted()
-{
-    bool grid_is_sorted = vector_is_valid(values);
-    if (!grid_is_sorted) {
-        throw std::runtime_error("Values are not sorted, or have duplicates.");
-    }
-}
-
-void GridAxis::check_extrapolation_limits()
-{
+    extrapolation_limits = limits;
     constexpr std::string_view error_format {"{} extrapolation limit ({:.6g}) is within the range "
                                              "of grid axis values [{:.6g}, {:.6g}]."};
     if (extrapolation_limits.first > values[0]) {
         throw std::runtime_error(fmt::format(
             error_format, "Lower", extrapolation_limits.first, values[0], values.back()));
-        extrapolation_limits.first = values[0];
     }
     if (extrapolation_limits.second < values.back()) {
         throw std::runtime_error(fmt::format(
             error_format, "Upper", extrapolation_limits.second, values[0], values.back()));
-        extrapolation_limits.second = values.back();
     }
 }
+
+const std::vector<double>& GridAxis::get_cubic_spacing_ratios(bool floor_or_ceiling) const
+{
+    return cubic_spacing_ratios[floor_or_ceiling];
+}
+
 
 // return an evenly spaced 1-d vector of doubles.
 std::vector<double> linspace(double start, double stop, std::size_t number_of_points)
