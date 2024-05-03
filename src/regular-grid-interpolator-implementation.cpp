@@ -202,19 +202,6 @@ std::vector<Method> RegularGridInterpolatorImplementation::get_interpolation_met
     return interpolation_methods;
 }
 
-std::vector<Method> RegularGridInterpolatorImplementation::get_extrapolation_methods() const
-{
-    std::vector<Method> extrapolation_methods(number_of_grid_axes);
-    static const std::unordered_map<ExtrapolationMethod, Method> extrapolation_method_map {
-        {ExtrapolationMethod::constant, Method::constant},
-        {ExtrapolationMethod::linear, Method::linear}};
-    for (std::size_t axis_index = 0; axis_index < number_of_grid_axes; axis_index++) {
-        extrapolation_methods[axis_index] =
-            extrapolation_method_map.at(grid_axes[axis_index].get_extrapolation_method());
-    }
-    return extrapolation_methods;
-}
-
 std::size_t RegularGridInterpolatorImplementation::get_grid_point_index(
     const std::vector<std::size_t>& coords) const
 {
@@ -408,7 +395,16 @@ void RegularGridInterpolatorImplementation::consolidate_methods()
     previous_methods = methods;
     methods = get_interpolation_methods();
     if (target_is_set) {
-        auto extrapolation_methods = get_extrapolation_methods();
+        // get extrapolation methods
+         std::vector<Method> extrapolation_methods(number_of_grid_axes);
+        static const std::unordered_map<ExtrapolationMethod, Method> extrapolation_method_map {
+            {ExtrapolationMethod::constant, Method::constant},
+            {ExtrapolationMethod::linear, Method::linear}};
+        for (std::size_t axis_index = 0; axis_index < number_of_grid_axes; axis_index++) {
+            extrapolation_methods[axis_index] =
+                extrapolation_method_map.at(grid_axes[axis_index].get_extrapolation_method());
+        }
+
         constexpr std::string_view error_format {
             "GridAxis '{}': The target ({:.6g}) is {} the extrapolation "
             "limit ({:.6g})."};

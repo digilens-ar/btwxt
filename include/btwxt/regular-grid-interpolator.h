@@ -27,8 +27,6 @@ enum class TargetBoundsStatus {
 // this will be the public-facing class.
 class RegularGridInterpolator {
   public:
-    RegularGridInterpolator();
-
     explicit RegularGridInterpolator(
         const std::vector<GridAxis>& grid_axes);
 

@@ -32,8 +32,6 @@ std::vector<GridPointDataSet> construct_grid_point_data_sets(const std::vector<s
 
 // Constructors
 
-RegularGridInterpolator::RegularGridInterpolator() = default;
-
 RegularGridInterpolator::RegularGridInterpolator(const std::vector<GridAxis>& grid)
     : implementation(
           std::make_unique<RegularGridInterpolatorImplementation>(grid, std::vector<GridPointDataSet>{}))

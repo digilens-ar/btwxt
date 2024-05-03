@@ -32,7 +32,7 @@ class GridFixture : public testing::Test {
     std::vector<GridAxis> grid;
     std::vector<std::vector<double>> data_sets;
     std::vector<double> target;
-    RegularGridInterpolator interpolator;
+    std::optional<RegularGridInterpolator> interpolator;
 
     GridFixture() = default;
 
@@ -63,7 +63,7 @@ class Grid2DFixture : public GridFixture {
                       4}}; // 15
         target = {12, 5};
         setup();
-        interpolator.set_axis_extrapolation_method(0, ExtrapolationMethod::linear);
+        interpolator.value().set_axis_extrapolation_method(0, ExtrapolationMethod::linear);
     }
 };
 
