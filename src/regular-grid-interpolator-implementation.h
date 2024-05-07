@@ -63,71 +63,71 @@ class RegularGridInterpolatorImplementation {
         return grid_axes[axis_index].get_extrapolation_limits();
     };
 
-    [[nodiscard]] inline std::size_t get_number_of_grid_axes() const
+    [[nodiscard]] std::size_t get_number_of_grid_axes() const
     {
-        return number_of_grid_axes;
+        return grid_axes.size();
     };
 
-    [[nodiscard]] inline std::size_t get_number_of_grid_points() const
+    [[nodiscard]] std::size_t get_number_of_grid_points() const
     {
         return number_of_grid_points;
     };
 
-    [[nodiscard]] inline const GridAxis& get_grid_axis(std::size_t axis_index) const
+    [[nodiscard]] const GridAxis& get_grid_axis(std::size_t axis_index) const
     {
         check_axis_index(axis_index, "get grid axis");
         return grid_axes[axis_index];
     };
 
-    [[nodiscard]] inline const GridPointDataSet&
+    [[nodiscard]] const GridPointDataSet&
     get_grid_point_data_set(std::size_t data_set_index) const
     {
         check_data_set_index(data_set_index, "get grid point data set");
         return grid_point_data_sets[data_set_index];
     };
 
-    [[nodiscard]] inline std::size_t get_number_of_grid_point_data_sets() const
+    [[nodiscard]] std::size_t get_number_of_grid_point_data_sets() const
     {
-        return number_of_grid_point_data_sets;
+        return grid_point_data_sets.size();
     };
 
-    [[nodiscard]] inline const std::vector<std::size_t>& get_grid_axis_lengths() const
+    [[nodiscard]] const std::vector<std::size_t>& get_grid_axis_lengths() const
     {
         return grid_axis_lengths;
     };
 
-    [[nodiscard]] inline const std::vector<TargetBoundsStatus>& get_target_bounds_status() const
+    [[nodiscard]] const std::vector<TargetBoundsStatus>& get_target_bounds_status() const
     {
         return target_bounds_status;
     };
 
-    [[nodiscard]] inline const std::vector<double>& get_floor_to_ceiling_fractions() const
+    [[nodiscard]] const std::vector<double>& get_floor_to_ceiling_fractions() const
     {
         return floor_to_ceiling_fractions;
     };
 
-    [[nodiscard]] inline const std::vector<std::size_t>& get_floor_grid_point_coordinates() const
+    [[nodiscard]] const std::vector<std::size_t>& get_floor_grid_point_coordinates() const
     {
         return floor_grid_point_coordinates;
     };
 
     std::vector<std::size_t> get_neighboring_indices_at_target();
 
-    [[nodiscard]] inline const std::vector<std::vector<double>>&
+    [[nodiscard]] const std::vector<std::vector<double>>&
     get_interpolation_coefficients() const
     {
         return interpolation_coefficients;
     };
 
-    [[nodiscard]] inline const std::vector<std::vector<double>>&
+    [[nodiscard]] const std::vector<std::vector<double>>&
     get_cubic_slope_coefficients() const
     {
         return cubic_slope_coefficients;
     };
 
-    [[nodiscard]] inline const std::vector<Method>& get_current_methods() const { return methods; };
+    [[nodiscard]] const std::vector<Method>& get_current_methods() const { return methods; };
 
-    [[nodiscard]] inline const std::vector<std::vector<short>>& get_hypercube()
+    [[nodiscard]] const std::vector<std::vector<short>>& get_hypercube()
     {
         consolidate_methods();
         return hypercube;
@@ -140,7 +140,7 @@ class RegularGridInterpolatorImplementation {
         return grid_axes[axis_index].get_cubic_spacing_ratios(floor_or_ceiling);
     };
 
-    const std::vector<double>& get_grid_point_data(const std::vector<std::size_t>& coordinates);
+    std::vector<double> get_grid_point_data(const std::vector<std::size_t>& coordinates);
 
     std::vector<double> get_grid_point_data_relative(const std::vector<std::size_t>& coordinates,
                                                      const std::vector<short>& translation);
@@ -155,16 +155,10 @@ class RegularGridInterpolatorImplementation {
     std::vector<GridAxis> grid_axes;
     std::vector<GridPointDataSet> grid_point_data_sets;
     std::size_t number_of_grid_points {0u};
-    std::size_t number_of_grid_point_data_sets {0u};
-    std::size_t number_of_grid_axes {0u};
     std::vector<std::size_t>
         grid_axis_lengths; // Number of points in each grid axis (size = number_of_grid_axes)
     std::vector<std::size_t> grid_axis_step_size;   // Used to translate grid point coordinates to
                                                     // indices (size = number_of_grid_axes)
-    std::vector<std::size_t> temporary_coordinates; // Memory placeholder to avoid re-allocating
-                                                    // memory (size = number_of_grid_axes)
-    std::vector<double> temporary_grid_point_data;  // Pre-sized container to store set of data at
-                                                    // grid point coordinates
 
     // calculated data
     bool target_is_set {false};
@@ -178,7 +172,6 @@ class RegularGridInterpolatorImplementation {
     std::vector<TargetBoundsStatus>
         target_bounds_status; // for each axis, for deciding interpolation vs. extrapolation;
     std::vector<Method> methods;
-    std::vector<Method> previous_methods;
     std::vector<std::vector<short>> hypercube; // A minimal set of indices near the target needed to
                                                // perform interpolation calculations.
     bool reset_hypercube {false};
@@ -226,7 +219,7 @@ class RegularGridInterpolatorImplementation {
 
     [[nodiscard]] std::vector<Method> get_interpolation_methods() const;
 
-    const std::vector<double>& get_grid_point_data(std::size_t grid_point_index);
+    std::vector<double> get_grid_point_data(std::size_t grid_point_index);
 
 };
 
