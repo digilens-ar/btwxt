@@ -19,7 +19,6 @@ RegularGridInterpolatorImplementation::RegularGridInterpolatorImplementation(
     , grid_axis_step_size(grid_axes.size())
     , target(grid_axes.size(), 0.)
     , floor_grid_point_coordinates(grid_axes.size(), 0)
-    , floor_to_ceiling_fractions(grid_axes.size(), 0.)
     , target_bounds_status(grid_axes.size())
     , methods(grid_axes.size(), Method::undefined)
     , weighting_factors(grid_axes.size(), std::vector<double>(4, 0.))
@@ -58,9 +57,9 @@ void RegularGridInterpolatorImplementation::set_target(const std::vector<double>
     target = target_in;
     target_is_set = true;
     set_floor_grid_point_coordinates();
-    calculate_floor_to_ceiling_fractions();
-    consolidate_methods();
-    calculate_interpolation_coefficients();
+    std::vector<double> floor_to_ceiling_fractions = calculate_floor_to_ceiling_fractions();
+    consolidate_methods(floor_to_ceiling_fractions);
+    calculate_interpolation_coefficients(floor_to_ceiling_fractions);
     set_results();
 }
 
@@ -187,7 +186,7 @@ double RegularGridInterpolatorImplementation::get_grid_point_weighting_factor(
     return weighting_factor;
 }
 
-std::vector<std::size_t> RegularGridInterpolatorImplementation::get_neighboring_indices_at_target()
+std::vector<std::size_t> RegularGridInterpolatorImplementation::get_neighboring_indices_at_target(std::vector<double> const& floor_to_ceiling_fractions) const
 {
     if (!target_is_set) {
         throw std::runtime_error("Cannot retrieve neighboring indices. No target has been set.");
@@ -333,7 +332,7 @@ void RegularGridInterpolatorImplementation::check_data_set_index(std::size_t dat
     }
 }
 
-void RegularGridInterpolatorImplementation::calculate_floor_to_ceiling_fractions()
+std::vector<double> RegularGridInterpolatorImplementation::calculate_floor_to_ceiling_fractions() const
 {
     auto compute_fraction = [](double x, double start, double end) -> double
     {
@@ -341,20 +340,23 @@ void RegularGridInterpolatorImplementation::calculate_floor_to_ceiling_fractions
         return (x - start) / (end - start);
     };
 
+    std::vector<double> out;
+    out.reserve(grid_axes.size());
     for (std::size_t axis_index = 0; axis_index < grid_axes.size(); ++axis_index) {
         if (grid_axis_lengths[axis_index] > 1) {
             auto& axis_values = grid_axes[axis_index].get_values();
             auto floor_index = floor_grid_point_coordinates[axis_index];
-            floor_to_ceiling_fractions[axis_index] = compute_fraction(
-                target[axis_index], axis_values[floor_index], axis_values[floor_index + 1]);
+            out.push_back(compute_fraction(
+                target[axis_index], axis_values[floor_index], axis_values[floor_index + 1]));
         }
         else {
-            floor_to_ceiling_fractions[axis_index] = 1.0;
+            out.push_back(1);
         }
     }
+    return out;
 }
 
-void RegularGridInterpolatorImplementation::consolidate_methods()
+void RegularGridInterpolatorImplementation::consolidate_methods(std::vector<double> const& floor_to_ceiling_fractions)
 // If out of bounds, extrapolate according to prescription
 // If outside of extrapolation limits, send a warning and perform constant extrapolation.
 {
@@ -402,11 +404,11 @@ void RegularGridInterpolatorImplementation::consolidate_methods()
     reset_hypercube |=
         !std::equal(previous_methods.begin(), previous_methods.end(), methods.begin());
     if (reset_hypercube) {
-        set_hypercube(methods);
+        set_hypercube(methods, floor_to_ceiling_fractions);
     }
 }
 
-void RegularGridInterpolatorImplementation::set_hypercube(std::vector<Method> methods_in)
+void RegularGridInterpolatorImplementation::set_hypercube(std::vector<Method> methods_in, std::vector<double> const& floor_to_ceiling_fractions)
 {
     assert(methods_in.size() == grid_axes.size());
     std::size_t previous_size = hypercube.size();
@@ -444,7 +446,7 @@ void RegularGridInterpolatorImplementation::set_hypercube(std::vector<Method> me
     }
 }
 
-void RegularGridInterpolatorImplementation::calculate_interpolation_coefficients()
+void RegularGridInterpolatorImplementation::calculate_interpolation_coefficients(std::vector<double> const& floor_to_ceiling_fractions)
 {
     static constexpr std::size_t floor = 0;
     static constexpr std::size_t ceiling = 1;

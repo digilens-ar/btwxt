@@ -101,17 +101,12 @@ class RegularGridInterpolatorImplementation {
         return target_bounds_status;
     };
 
-    [[nodiscard]] const std::vector<double>& get_floor_to_ceiling_fractions() const
-    {
-        return floor_to_ceiling_fractions;
-    };
-
     [[nodiscard]] const std::vector<std::size_t>& get_floor_grid_point_coordinates() const
     {
         return floor_grid_point_coordinates;
     };
 
-    std::vector<std::size_t> get_neighboring_indices_at_target();
+    std::vector<std::size_t> get_neighboring_indices_at_target(std::vector<double> const& floor_to_ceiling_fractions) const;
 
     [[nodiscard]] const std::vector<std::vector<double>>&
     get_interpolation_coefficients() const
@@ -126,12 +121,6 @@ class RegularGridInterpolatorImplementation {
     };
 
     [[nodiscard]] const std::vector<Method>& get_current_methods() const { return methods; };
-
-    [[nodiscard]] const std::vector<std::vector<short>>& get_hypercube()
-    {
-        consolidate_methods();
-        return hypercube;
-    };
 
     [[nodiscard]] const std::vector<double>&
     get_axis_cubic_spacing_ratios(std::size_t axis_index, std::size_t floor_or_ceiling) const
@@ -167,8 +156,7 @@ class RegularGridInterpolatorImplementation {
         floor_grid_point_coordinates; // coordinates of the grid point <= target
     std::size_t floor_grid_point_index {
         0u}; // Index of the floor_grid_point_coordinates (used for hypercube caching)
-    std::vector<double> floor_to_ceiling_fractions; // for each axis, the fraction the target value
-                                                    // is between its floor and ceiling axis values
+     
     std::vector<TargetBoundsStatus>
         target_bounds_status; // for each axis, for deciding interpolation vs. extrapolation;
     std::vector<Method> methods;
@@ -196,13 +184,15 @@ class RegularGridInterpolatorImplementation {
 
     void check_grid_point_data_set_size(const GridPointDataSet& grid_point_data_set);
 
-    void calculate_floor_to_ceiling_fractions();
+    // for each axis, the fraction the target value
+    // is between its floor and ceiling axis values
+    std::vector<double> calculate_floor_to_ceiling_fractions() const;
 
-    void consolidate_methods();
+    void consolidate_methods(std::vector<double> const& floor_to_ceiling_fractions);
 
-    void calculate_interpolation_coefficients();
+    void calculate_interpolation_coefficients(std::vector<double> const& floor_to_ceiling_fractions);
 
-    void set_hypercube(std::vector<Method> methods);
+    void set_hypercube(std::vector<Method> methods, std::vector<double> const& floor_to_ceiling_fractions);
 
     void set_hypercube_grid_point_data();
 

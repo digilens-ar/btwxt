@@ -130,11 +130,6 @@ std::vector<double> RegularGridInterpolator::get_values_at_target() const
     return implementation->get_results();
 }
 
-std::vector<std::size_t> RegularGridInterpolator::get_neighboring_indices_at_target() const
-{
-    return implementation->get_neighboring_indices_at_target();
-}
-
 const std::vector<double>& RegularGridInterpolator::get_target() const
 {
     return implementation->get_target();
