@@ -6,29 +6,6 @@
 
 namespace Btwxt {
 
-std::vector<GridAxis> construct_grid_axes(const std::vector<std::vector<double>>& grid_axis_vectors)
-{
-    std::vector<GridAxis> grid_axes;
-    grid_axes.reserve(grid_axis_vectors.size());
-    for (const auto& axis : grid_axis_vectors) {
-        grid_axes.emplace_back(axis,
-                               InterpolationMethod::linear,
-                               ExtrapolationMethod::constant,
-                               std::pair<double, double> {-DBL_MAX, DBL_MAX});
-    }
-    return grid_axes;
-}
-
-std::vector<GridPointDataSet> construct_grid_point_data_sets(const std::vector<std::vector<double>>& grid_point_data_vectors)
-{
-    std::vector<GridPointDataSet> grid_point_data_sets;
-    grid_point_data_sets.reserve(grid_point_data_vectors.size());
-    for (const auto& grid_point_data_set : grid_point_data_vectors) {
-        grid_point_data_sets.emplace_back(
-            grid_point_data_set);
-    }
-    return grid_point_data_sets;
-}
 
 // Constructors
 RegularGridInterpolator::RegularGridInterpolator(
@@ -101,17 +78,6 @@ const GridAxis& RegularGridInterpolator::get_grid_axis(std::size_t axis_index) c
 const GridPointDataSet& RegularGridInterpolator::get_grid_point_data_set(std::size_t data_set_index) const
 {
     return implementation->get_grid_point_data_set(data_set_index);
-}
-
-double RegularGridInterpolator::normalize_grid_point_data_set_at_target(std::size_t data_set_index,
-                                                                        const double scalar)
-{
-    return implementation->normalize_grid_point_data_set_at_target(data_set_index, scalar);
-}
-
-void RegularGridInterpolator::normalize_grid_point_data_sets_at_target(const double scalar)
-{
-    return implementation->normalize_grid_point_data_sets_at_target(scalar);
 }
 
 // Public calculation methods

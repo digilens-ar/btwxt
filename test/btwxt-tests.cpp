@@ -233,47 +233,6 @@ TEST_F(Grid2DFixture, cubic_interpolate)
     EXPECT_THAT(result, testing::ElementsAre(testing::DoubleEq(4.416), testing::DoubleEq(8.832)));
 }
 
-TEST_F(Grid2DFixture, normalize)
-{
-    interpolator.value().set_axis_interpolation_method(0, InterpolationMethod::cubic);
-    interpolator.value().set_axis_interpolation_method(1, InterpolationMethod::cubic);
-
-    // All values, current target
-    interpolator.value().set_target(target);
-    interpolator.value().normalize_grid_point_data_sets_at_target(); // normalize first grid point data set
-    std::vector<double> result = interpolator.value().get_values_at_target();
-    EXPECT_THAT(result, testing::ElementsAre(testing::DoubleEq(1.0), testing::DoubleEq(1.0)));
-}
-
-TEST_F(Function2DFixture, normalization_return_scalar)
-{
-    target = {7.0, 3.0};
-    std::vector<double> normalization_target = {2.0, 3.0};
-    double expected_divisor {functions[0](normalization_target)};
-    double expected_value_at_target {functions[0](target) / expected_divisor};
-    interpolator.value().set_target(normalization_target);
-    double return_scalar = interpolator.value().normalize_grid_point_data_set_at_target(0, 1.0);
-    interpolator.value().set_target(target);
-    std::vector<double> results = interpolator.value().get_values_at_target();
-    EXPECT_THAT(return_scalar, testing::DoubleEq(expected_divisor));
-    EXPECT_THAT(results, testing::ElementsAre(expected_value_at_target));
-}
-
-TEST_F(Function2DFixture, normalization_return_compound_scalar)
-{
-    target = {7.0, 3.0};
-    std::vector<double> normalization_target = {2.0, 3.0};
-    double normalization_divisor = 4.0;
-    double expected_compound_divisor {functions[0](normalization_target) * normalization_divisor};
-    double expected_value_at_target {functions[0](target) / expected_compound_divisor};
-    interpolator.value().set_target(normalization_target);
-    double return_scalar = interpolator.value().normalize_grid_point_data_set_at_target(0, normalization_divisor);
-    interpolator.value().set_target(target);
-    std::vector<double> results = interpolator.value().get_values_at_target();
-    EXPECT_THAT(return_scalar, testing::DoubleEq(expected_compound_divisor));
-    EXPECT_THAT(results, testing::ElementsAre(expected_value_at_target));
-}
-
 TEST_F(Function4DFixture, construct)
 {
     interpolator.value().set_target(target);

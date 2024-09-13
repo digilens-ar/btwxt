@@ -55,11 +55,6 @@ class RegularGridInterpolator {
 
     const GridAxis& get_grid_axis(std::size_t axis_index) const;
 
-    // Public normalization methods
-    double normalize_grid_point_data_set_at_target(std::size_t data_set_index, double scalar = 1.0);
-
-    void normalize_grid_point_data_sets_at_target(double scalar = 1.0);
-
     // Get results
     void set_target(const std::vector<double>& target);
 

@@ -4,6 +4,8 @@
 #include <unordered_map>
 #include <cassert>
 #include "regular-grid-interpolator-implementation.h"
+
+#include <array>
 #include <format>
 #include <stdexcept>
 
@@ -21,10 +23,7 @@ RegularGridInterpolatorImplementation::RegularGridInterpolatorImplementation(
     , floor_grid_point_coordinates(grid_axes.size(), 0)
     , target_bounds_status(grid_axes.size())
     , methods(grid_axes.size(), Method::undefined)
-    , weighting_factors(grid_axes.size(), std::vector<double>(4, 0.))
     , results(grid_point_data_sets.size(), 0.)
-    , interpolation_coefficients(grid_axes.size(), std::vector<double>(2, 0.))
-    , cubic_slope_coefficients(grid_axes.size(), std::vector<double>(2, 0.))
 {
     // set axis sizes and calculate number of grid points
     number_of_grid_points = 1;
@@ -59,8 +58,8 @@ void RegularGridInterpolatorImplementation::set_target(const std::vector<double>
     set_floor_grid_point_coordinates();
     std::vector<double> floor_to_ceiling_fractions = calculate_floor_to_ceiling_fractions();
     consolidate_methods(floor_to_ceiling_fractions);
-    calculate_interpolation_coefficients(floor_to_ceiling_fractions);
-    set_results();
+    auto weighting_factors = calculate_interpolation_coefficients(floor_to_ceiling_fractions);
+    set_results(weighting_factors);
 }
 
 const std::vector<double>& RegularGridInterpolatorImplementation::get_target() const
@@ -80,55 +79,6 @@ std::vector<double> RegularGridInterpolatorImplementation::get_results() const
          throw std::runtime_error("Results were requested, but no target has been set.");
     }
     return results;
-}
-
-void RegularGridInterpolatorImplementation::normalize_grid_point_data_sets_at_target(
-    const double scalar)
-{
-    if (!target_is_set) {
-         throw std::runtime_error("Cannot normalize grid point data sets. No target has been set.");
-    }
-    for (std::size_t data_set_index = 0; data_set_index < grid_point_data_sets.size();
-         ++data_set_index) {
-        normalize_grid_point_data_set(data_set_index, results[data_set_index] * scalar);
-    }
-    hypercube_cache.clear();
-    set_results();
-}
-
-double RegularGridInterpolatorImplementation::normalize_grid_point_data_set_at_target(
-    std::size_t data_set_index, double scalar)
-{
-    check_data_set_index(data_set_index, "normalize grid point data set");
-    if (!target_is_set) {
-        throw std::runtime_error(std::format(
-            "GridPointDataSet '{}': Cannot normalize grid point data set. No target has been set.",
-            data_set_index));
-    }
-    // create a scalar which represents the product of the inverted normalization factor and the
-    // value in the data set at the independent variable reference value
-    double total_scalar = results[data_set_index] * scalar;
-    normalize_grid_point_data_set(data_set_index, total_scalar);
-    hypercube_cache.clear();
-    set_results();
-
-    return total_scalar;
-}
-
-void RegularGridInterpolatorImplementation::normalize_grid_point_data_set(
-    std::size_t data_set_index, double scalar)
-{
-    check_data_set_index(data_set_index, "normalize grid point data set");
-    auto& data_set = grid_point_data_sets[data_set_index];
-    if (scalar == 0.0) {
-         throw std::runtime_error(std::format("GridPointDataSet '{}': Attempt to normalize grid point data set by zero.",
-                        data_set_index));
-    }
-    scalar = 1.0 / scalar;
-    std::transform(data_set.begin(),
-                   data_set.end(),
-                   data_set.begin(),
-                   [scalar](double x) -> double { return x * scalar; });
 }
 
 std::vector<double> RegularGridInterpolatorImplementation::get_grid_point_data(std::size_t grid_point_index)
@@ -177,7 +127,7 @@ std::size_t RegularGridInterpolatorImplementation::get_grid_point_index(
 }
 
 double RegularGridInterpolatorImplementation::get_grid_point_weighting_factor(
-    const std::vector<short>& hypercube_indices)
+    const std::vector<short>& hypercube_indices, std::vector<std::array<double, 4>> const& weighting_factors)
 {
     double weighting_factor = 1.0;
     for (std::size_t axis_index = 0; axis_index < grid_axes.size(); axis_index++) {
@@ -226,13 +176,13 @@ void RegularGridInterpolatorImplementation::check_grid_point_data_set_size(
     }
 }
 
-void RegularGridInterpolatorImplementation::set_results()
+void RegularGridInterpolatorImplementation::set_results(std::vector<std::array<double, 4>> const& weighting_factors)
 {
     set_hypercube_grid_point_data();
     std::fill(results.begin(), results.end(), 0.0);
     for (std::size_t hypercube_index = 0; hypercube_index < hypercube.size(); ++hypercube_index) {
         hypercube_weights[hypercube_index] =
-            get_grid_point_weighting_factor(hypercube[hypercube_index]);
+            get_grid_point_weighting_factor(hypercube[hypercube_index], weighting_factors);
         for (std::size_t data_set_index = 0; data_set_index < grid_point_data_sets.size();
              ++data_set_index) {
             results[data_set_index] += hypercube_grid_point_data[hypercube_index][data_set_index] *
@@ -446,20 +396,24 @@ void RegularGridInterpolatorImplementation::set_hypercube(std::vector<Method> me
     }
 }
 
-void RegularGridInterpolatorImplementation::calculate_interpolation_coefficients(std::vector<double> const& floor_to_ceiling_fractions)
+std::vector<std::array<double, 4>> RegularGridInterpolatorImplementation::calculate_interpolation_coefficients(std::vector<double> const& floor_to_ceiling_fractions) const
 {
     static constexpr std::size_t floor = 0;
     static constexpr std::size_t ceiling = 1;
+    std::vector<std::array<double, 4>> weighting_factors;
+    weighting_factors.reserve(grid_axes.size());
     for (std::size_t axis_index = 0; axis_index < grid_axes.size(); axis_index++) {
         double mu = floor_to_ceiling_fractions[axis_index];
+        std::array<double, 2> interpolation_coefficients;
+        std::array<double, 2> cubic_slope_coefficients;
         if (methods[axis_index] == Method::cubic) {
-            interpolation_coefficients[axis_index][floor] = 2 * mu * mu * mu - 3 * mu * mu + 1;
-            interpolation_coefficients[axis_index][ceiling] = -2 * mu * mu * mu + 3 * mu * mu;
-            cubic_slope_coefficients[axis_index][floor] =
+            interpolation_coefficients[floor] = 2 * mu * mu * mu - 3 * mu * mu + 1;
+            interpolation_coefficients[ceiling] = -2 * mu * mu * mu + 3 * mu * mu;
+            cubic_slope_coefficients[floor] =
                 (mu * mu * mu - 2 * mu * mu + mu) *
                 get_axis_cubic_spacing_ratios(axis_index,
                                               floor)[floor_grid_point_coordinates[axis_index]];
-            cubic_slope_coefficients[axis_index][ceiling] =
+            cubic_slope_coefficients[ceiling] =
                 (mu * mu * mu - mu * mu) *
                 get_axis_cubic_spacing_ratios(axis_index,
                                               ceiling)[floor_grid_point_coordinates[axis_index]];
@@ -468,22 +422,19 @@ void RegularGridInterpolatorImplementation::calculate_interpolation_coefficients
             if (methods[axis_index] == Method::constant) {
                 mu = mu < 0 ? 0 : 1;
             }
-            interpolation_coefficients[axis_index][floor] = 1 - mu;
-            interpolation_coefficients[axis_index][ceiling] = mu;
-            cubic_slope_coefficients[axis_index][floor] = 0.0;
-            cubic_slope_coefficients[axis_index][ceiling] = 0.0;
+            interpolation_coefficients[floor] = 1 - mu;
+            interpolation_coefficients[ceiling] = mu;
+            cubic_slope_coefficients[floor] = 0.0;
+            cubic_slope_coefficients[ceiling] = 0.0;
         }
-        weighting_factors[axis_index][0] =
-            -cubic_slope_coefficients[axis_index][floor]; // point below floor (-1)
-        weighting_factors[axis_index][1] =
-            interpolation_coefficients[axis_index][floor] -
-            cubic_slope_coefficients[axis_index][ceiling]; // floor (0)
-        weighting_factors[axis_index][2] =
-            interpolation_coefficients[axis_index][ceiling] +
-            cubic_slope_coefficients[axis_index][floor]; // ceiling (1)
-        weighting_factors[axis_index][3] =
-            cubic_slope_coefficients[axis_index][ceiling]; // point above ceiling (2)
+        weighting_factors.emplace_back(std::array<double, 4> {
+             -cubic_slope_coefficients[floor], // point below floor (-1)
+            interpolation_coefficients[floor] - cubic_slope_coefficients[ceiling], // floor (0)
+            interpolation_coefficients[ceiling] + cubic_slope_coefficients[floor], // ceiling (1)
+            cubic_slope_coefficients[ceiling] // point above ceiling (2)
+        });
     }
+    return weighting_factors;
 }
 
 void RegularGridInterpolatorImplementation::set_hypercube_grid_point_data()

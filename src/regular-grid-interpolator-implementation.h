@@ -50,12 +50,6 @@ class RegularGridInterpolatorImplementation {
 
     [[nodiscard]] std::vector<double> get_results() const;
 
-    void normalize_grid_point_data_sets_at_target(double scalar = 1.0);
-
-    double normalize_grid_point_data_set_at_target(std::size_t data_set_index, double scalar = 1.0);
-
-    void normalize_grid_point_data_set(std::size_t data_set_index, double scalar = 1.0);
-
     // Public getters
     [[nodiscard]] std::pair<double, double> get_extrapolation_limits(std::size_t axis_index) const
     {
@@ -108,19 +102,8 @@ class RegularGridInterpolatorImplementation {
 
     std::vector<std::size_t> get_neighboring_indices_at_target(std::vector<double> const& floor_to_ceiling_fractions) const;
 
-    [[nodiscard]] const std::vector<std::vector<double>>&
-    get_interpolation_coefficients() const
-    {
-        return interpolation_coefficients;
-    };
-
-    [[nodiscard]] const std::vector<std::vector<double>>&
-    get_cubic_slope_coefficients() const
-    {
-        return cubic_slope_coefficients;
-    };
-
     [[nodiscard]] const std::vector<Method>& get_current_methods() const { return methods; };
+
 
     [[nodiscard]] const std::vector<double>&
     get_axis_cubic_spacing_ratios(std::size_t axis_index, std::size_t floor_or_ceiling) const
@@ -137,7 +120,7 @@ class RegularGridInterpolatorImplementation {
     [[nodiscard]] std::size_t
     get_grid_point_index(const std::vector<std::size_t>& coordinates) const;
 
-    double get_grid_point_weighting_factor(const std::vector<short>& hypercube_indices);
+    double get_grid_point_weighting_factor(const std::vector<short>& hypercube_indices, std::vector<std::array<double, 4>> const& weighting_factors);
 
   private:
     // Structured data
@@ -163,13 +146,8 @@ class RegularGridInterpolatorImplementation {
     std::vector<std::vector<short>> hypercube; // A minimal set of indices near the target needed to
                                                // perform interpolation calculations.
     bool reset_hypercube {false};
-    std::vector<std::vector<double>>
-        weighting_factors;       // weights of hypercube neighbor grid point data used
-                                 // to calculate the value at the target
-    std::vector<double> results; // Interpolated results at a given target
 
-    std::vector<std::vector<double>> interpolation_coefficients;
-    std::vector<std::vector<double>> cubic_slope_coefficients;
+    std::vector<double> results; // Interpolated results at a given target
 
     std::vector<std::vector<double>> hypercube_grid_point_data;
     std::vector<double> hypercube_weights;
@@ -190,13 +168,13 @@ class RegularGridInterpolatorImplementation {
 
     void consolidate_methods(std::vector<double> const& floor_to_ceiling_fractions);
 
-    void calculate_interpolation_coefficients(std::vector<double> const& floor_to_ceiling_fractions);
+    std::vector<std::array<double, 4>> calculate_interpolation_coefficients(std::vector<double> const& floor_to_ceiling_fractions) const;
 
     void set_hypercube(std::vector<Method> methods, std::vector<double> const& floor_to_ceiling_fractions);
 
     void set_hypercube_grid_point_data();
 
-    void set_results();
+    void set_results(std::vector<std::array<double, 4>> const& weighting_factors);
 
     void set_floor_grid_point_coordinates();
 
@@ -212,10 +190,5 @@ class RegularGridInterpolatorImplementation {
     std::vector<double> get_grid_point_data(std::size_t grid_point_index);
 
 };
-
-std::vector<GridAxis> construct_grid_axes(const std::vector<std::vector<double>>& grid);
-
-std::vector<GridPointDataSet>
-construct_grid_point_data_sets(const std::vector<std::vector<double>>& grid_point_data_sets);
 
 } // namespace Btwxt

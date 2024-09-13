@@ -12,6 +12,31 @@
 
 namespace Btwxt {
 
+
+inline std::vector<GridAxis> construct_grid_axes(const std::vector<std::vector<double>>& grid_axis_vectors)
+{
+    std::vector<GridAxis> grid_axes;
+    grid_axes.reserve(grid_axis_vectors.size());
+    for (const auto& axis : grid_axis_vectors) {
+        grid_axes.emplace_back(axis,
+                               InterpolationMethod::linear,
+                               ExtrapolationMethod::constant,
+                               std::pair<double, double> {-DBL_MAX, DBL_MAX});
+    }
+    return grid_axes;
+}
+
+inline std::vector<GridPointDataSet> construct_grid_point_data_sets(const std::vector<std::vector<double>>& grid_point_data_vectors)
+{
+    std::vector<GridPointDataSet> grid_point_data_sets;
+    grid_point_data_sets.reserve(grid_point_data_vectors.size());
+    for (const auto& grid_point_data_set : grid_point_data_vectors) {
+        grid_point_data_sets.emplace_back(
+            grid_point_data_set);
+    }
+    return grid_point_data_sets;
+}
+
 class GridImplementationFixture : public testing::Test {
   public:
     std::vector<std::vector<double>> grid;
