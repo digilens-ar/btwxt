@@ -22,7 +22,7 @@ GridAxis::GridAxis(std::vector<double> values_in,
     std::fill(cubic_spacing_ratios.begin(), cubic_spacing_ratios.end(), std::vector<double>(values.size() - 1, 1.0));
     if (interpolation_method == InterpolationMethod::cubic) {
         //calculate_cubic_spacing_ratios
-        if (get_length() == 1) {
+        if (values.size() == 1) {
             interpolation_method = InterpolationMethod::linear;
             spdlog::warn("A cubic interpolation method is not valid for grid axis with only one value. "
                          "Interpolation method reset to linear.");

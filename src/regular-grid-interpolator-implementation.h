@@ -54,11 +54,6 @@ class RegularGridInterpolatorImplementation {
         return grid_point_data_sets.size();
     };
 
-    [[nodiscard]] const std::vector<std::size_t>& get_grid_axis_lengths() const
-    {
-        return grid_axis_lengths;
-    };
-
     std::vector<double> get_grid_point_data(const std::vector<std::size_t>& coordinates);
 
     std::vector<double> get_grid_point_data_relative(const std::vector<std::size_t>& coordinates,
@@ -74,8 +69,6 @@ class RegularGridInterpolatorImplementation {
     std::vector<GridAxis> grid_axes;
     std::vector<GridPointDataSet> grid_point_data_sets;
     std::size_t number_of_grid_points {0u};
-    std::vector<std::size_t>
-        grid_axis_lengths; // Number of points in each grid axis (size = number_of_grid_axes)
     std::vector<std::size_t> grid_axis_step_size;   // Used to translate grid point coordinates to
                                                     // indices (size = number_of_grid_axes)
 
@@ -85,8 +78,6 @@ class RegularGridInterpolatorImplementation {
     std::vector<std::vector<short>> hypercube; // A minimal set of indices near the target needed to
                                                // perform interpolation calculations.
     bool reset_hypercube {false};
-
-    std::vector<double> results; // Interpolated results at a given target
 
     std::vector<std::vector<double>> hypercube_grid_point_data;
     std::vector<double> hypercube_weights;
@@ -112,7 +103,7 @@ class RegularGridInterpolatorImplementation {
 
     void set_hypercube_grid_point_data(std::vector<size_t> const& floor_grid_point_coordinates);
 
-    void set_results(std::vector<std::array<double, 4>> const& weighting_factors);
+    std::vector<double> set_results(std::vector<std::array<double, 4>> const& weighting_factors);
 
     void check_axis_index(std::size_t axis_index, const std::string& action_description) const;
 

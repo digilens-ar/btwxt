@@ -17,17 +17,14 @@ RegularGridInterpolatorImplementation::RegularGridInterpolatorImplementation(
     :
     grid_axes(grid_axes)
     , grid_point_data_sets(grid_point_data_sets)
-    , grid_axis_lengths(grid_axes.size())
     , grid_axis_step_size(grid_axes.size())
     , methods(grid_axes.size(), Method::undefined)
-    , results(grid_point_data_sets.size(), 0.)
 {
     // set axis sizes and calculate number of grid points
     number_of_grid_points = 1;
     for (std::size_t axis_index = grid_axes.size(); axis_index-- > 0;) {
-        std::size_t length =
-            grid_axes[axis_index].get_length(); // length > 0 ensured by GridAxis constructor
-        grid_axis_lengths[axis_index] = length;
+        const std::size_t length =
+            grid_axes[axis_index].get_values().size(); // length > 0 ensured by GridAxis constructor
         grid_axis_step_size[axis_index] = number_of_grid_points;
         number_of_grid_points *= length;
     }
@@ -51,7 +48,7 @@ std::vector<double> RegularGridInterpolatorImplementation::solve(const std::vect
     std::vector<TargetBoundsStatus> target_bounds_status(grid_axes.size(), TargetBoundsStatus::interpolate);
     for (std::size_t axis_index = 0; axis_index < grid_axes.size(); axis_index += 1) {
         const auto& axis_values = grid_axes[axis_index].get_values();
-        int length = static_cast<int>(grid_axis_lengths[axis_index]);
+        const int length = static_cast<int>(axis_values.size());
         if (target_in[axis_index] < axis_values[0]) {
             target_bounds_status[axis_index] = TargetBoundsStatus::extrapolate_low;
             floor_grid_point_coordinates[axis_index] = 0;
@@ -79,7 +76,17 @@ std::vector<double> RegularGridInterpolatorImplementation::solve(const std::vect
     consolidate_methods(floor_to_ceiling_fractions, target_in, target_bounds_status);
     auto weighting_factors = calculate_interpolation_coefficients(floor_to_ceiling_fractions, floor_grid_point_coordinates);
     set_hypercube_grid_point_data(floor_grid_point_coordinates);
-    set_results(weighting_factors);
+    // get results
+    std::vector<double> results(grid_point_data_sets.size(), 0);
+    for (std::size_t hypercube_index = 0; hypercube_index < hypercube.size(); ++hypercube_index) {
+        hypercube_weights[hypercube_index] =
+            get_grid_point_weighting_factor(hypercube[hypercube_index], weighting_factors);
+        for (std::size_t data_set_index = 0; data_set_index < grid_point_data_sets.size();
+             ++data_set_index) {
+            results[data_set_index] += hypercube_grid_point_data[hypercube_index][data_set_index] *
+                                       hypercube_weights[hypercube_index];
+        }
+    }
     return results;
 }
 
@@ -138,36 +145,20 @@ double RegularGridInterpolatorImplementation::get_grid_point_weighting_factor(
     return weighting_factor;
 }
 
-// private methods
-
-void RegularGridInterpolatorImplementation::set_results(std::vector<std::array<double, 4>> const& weighting_factors)
-{
-    std::fill(results.begin(), results.end(), 0.0);
-    for (std::size_t hypercube_index = 0; hypercube_index < hypercube.size(); ++hypercube_index) {
-        hypercube_weights[hypercube_index] =
-            get_grid_point_weighting_factor(hypercube[hypercube_index], weighting_factors);
-        for (std::size_t data_set_index = 0; data_set_index < grid_point_data_sets.size();
-             ++data_set_index) {
-            results[data_set_index] += hypercube_grid_point_data[hypercube_index][data_set_index] *
-                                       hypercube_weights[hypercube_index];
-        }
-    }
-}
-
 // Internal calculation methods
 
 std::size_t RegularGridInterpolatorImplementation::get_grid_point_index_relative(
     const std::vector<std::size_t>& coords, const std::vector<short>& translation)
 {
     std::vector<std::size_t> temporary_coordinates(grid_axes.size());
-    int new_coord;
     for (std::size_t axis_index = 0; axis_index < coords.size(); axis_index++) {
-        new_coord = static_cast<int>(coords[axis_index]) + translation[axis_index];
+        int new_coord = static_cast<int>(coords[axis_index]) + translation[axis_index];
+        const int length = static_cast<int>(grid_axes[axis_index].get_values().size());
         if (new_coord < 0) {
             temporary_coordinates[axis_index] = 0u;
         }
-        else if (new_coord >= static_cast<int>(grid_axis_lengths[axis_index])) {
-            temporary_coordinates[axis_index] = grid_axis_lengths[axis_index] - 1u;
+        else if (new_coord >= length) {
+            temporary_coordinates[axis_index] = length - 1u;
         }
         else {
             temporary_coordinates[axis_index] = new_coord;
@@ -211,8 +202,8 @@ std::vector<double> RegularGridInterpolatorImplementation::calculate_floor_to_ce
     std::vector<double> out;
     out.reserve(grid_axes.size());
     for (std::size_t axis_index = 0; axis_index < grid_axes.size(); ++axis_index) {
-        if (grid_axis_lengths[axis_index] > 1) {
-            auto& axis_values = grid_axes[axis_index].get_values();
+        auto& axis_values = grid_axes[axis_index].get_values();
+        if (axis_values.size() > 1) {
             auto floor_index = floor_grid_point_coordinates[axis_index];
             out.push_back(compute_fraction(
                 target[axis_index], axis_values[floor_index], axis_values[floor_index + 1]));
