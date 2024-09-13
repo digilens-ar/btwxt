@@ -8,13 +8,13 @@
 #include <vector>
 
 // btwxt
+#include <map>
+
 #include "grid-axis.h"
 
 namespace Btwxt {
 
 using GridPointDataSet = std::vector<double>; // Data corresponding to all points within a collection of grid axes. Length of data should equal the total number of permutations of grid axes points.
-
-class RegularGridInterpolatorImplementation;
 
 enum class TargetBoundsStatus {
     extrapolate_low,
@@ -22,35 +22,90 @@ enum class TargetBoundsStatus {
     extrapolate_high,
 };
 
-// this will be the public-facing class.
+enum class Method { undefined, constant, linear, cubic };
+
 class RegularGridInterpolator {
   public:
-    RegularGridInterpolator(
-        const std::vector<GridAxis>& grid_axes,
-        const std::vector<GridPointDataSet>& grid_point_data_sets);
 
-    ~RegularGridInterpolator();
+    RegularGridInterpolator(const std::vector<GridAxis>& grid_axes,
+                                          const std::vector<GridPointDataSet>& grid_point_data_sets);
 
-    RegularGridInterpolator(const RegularGridInterpolator& source);
-
-    RegularGridInterpolator& operator=(const RegularGridInterpolator& source);
+    [[nodiscard]] std::vector<double> solve(std::vector<double> const& target);
 
     // Public getters
-    std::size_t get_number_of_dimensions() const;
 
-    std::size_t get_number_of_grid_points() const;
+    [[nodiscard]] std::size_t get_number_of_grid_axes() const
+    {
+        return grid_axes_.size();
+    };
 
-    std::size_t get_number_of_grid_point_data_sets() const;
+    [[nodiscard]] std::size_t get_number_of_grid_points() const
+    {
+        return number_of_grid_points_;
+    };
 
-    const GridPointDataSet& get_grid_point_data_set(std::size_t data_set_index) const;
+    [[nodiscard]] const GridAxis& get_grid_axis(std::size_t axis_index) const
+    {
+        return grid_axes_[axis_index];
+    };
 
-    const GridAxis& get_grid_axis(std::size_t axis_index) const;
+    [[nodiscard]] const GridPointDataSet&
+    get_grid_point_data_set(std::size_t data_set_index) const
+    {
+        return grid_point_data_sets_[data_set_index];
+    };
 
-    // Get results
-    std::vector<double> solve(const std::vector<double>& target);
+    [[nodiscard]] std::size_t get_number_of_grid_point_data_sets() const
+    {
+        return grid_point_data_sets_.size();
+    };
 
   private:
-    std::unique_ptr<RegularGridInterpolatorImplementation> implementation;
+    // Structured data
+    std::vector<GridAxis> grid_axes_;
+    std::vector<GridPointDataSet> grid_point_data_sets_;
+    std::size_t number_of_grid_points_ {0u};
+    std::vector<std::size_t> grid_axis_step_size_;   // Used to translate grid point coordinates to
+                                                    // indices (size = number_of_grid_axes)
+
+    // calculated data
+
+    std::vector<Method> methods;
+    std::vector<std::vector<short>> hypercube; // A minimal set of indices near the target needed to
+                                               // perform interpolation calculations.
+    std::map<std::pair<std::size_t, std::size_t>, std::vector<std::vector<double>>> hypercube_cache;
+
+    std::size_t hypercube_size_hash {0u};
+
+    // Internal methods
+    [[nodiscard]] std::size_t
+    get_grid_point_index(const std::vector<std::size_t>& coordinates) const;
+
+    std::vector<double> get_grid_point_data_relative(const std::vector<std::size_t>& coordinates,
+                                                     const std::vector<short>& translation) const;
+
+    double get_grid_point_weighting_factor(const std::vector<short>& hypercube_indices, std::vector<std::array<double, 4>> const& weighting_factors) const;
+
+    std::size_t get_grid_point_index_relative(const std::vector<std::size_t>& coordinates,
+                                              const std::vector<short>& translation) const;
+
+    // for each axis, the fraction the target value
+    // is between its floor and ceiling axis values
+    std::vector<double> calculate_floor_to_ceiling_fractions(std::vector<double> const& target, std::vector<size_t> const& floor_grid_point_coordinates) const;
+
+    void consolidate_methods(std::vector<double> const& floor_to_ceiling_fractions, std::vector<
+                             TargetBoundsStatus> const& target_bounds_status);
+
+    std::vector<std::array<double, 4>> calculate_interpolation_coefficients(std::vector<double> const& floor_to_ceiling_fractions, std::vector<size_t> const& floor_grid_point_coordinates) const;
+
+    void set_hypercube(std::vector<Method> const& methods, std::vector<double> const& floor_to_ceiling_fractions);
+
+    std::vector<std::vector<double>> set_hypercube_grid_point_data(
+        std::vector<size_t> const& floor_grid_point_coordinates);
+
+    [[nodiscard]] std::vector<Method> get_interpolation_methods() const;
+
+    std::vector<double> get_grid_point_data(std::size_t grid_point_index) const;
 };
 
 } // namespace Btwxt

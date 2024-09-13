@@ -7,7 +7,6 @@
 #include <gtest/gtest.h>
 
 // btwxt
-#include "regular-grid-interpolator-implementation.h"
 #include <btwxt/btwxt.h>
 
 namespace Btwxt {
@@ -38,7 +37,7 @@ inline std::vector<GridPointDataSet> construct_grid_point_data_sets(const std::v
 class GridImplementationFixture : public testing::Test {
   public:
     std::vector<double> target;
-    RegularGridInterpolatorImplementation interpolator;
+    RegularGridInterpolator interpolator;
 
     GridImplementationFixture(std::vector<GridAxis> const& gridd, std::vector<std::vector<double>> const& datasetss):
         interpolator(gridd, construct_grid_point_data_sets(datasetss))

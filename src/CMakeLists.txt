@@ -1,9 +1,9 @@
 
 add_library(btwxt
     STATIC
-    regular-grid-interpolator-implementation.h
-    regular-grid-interpolator-implementation.cpp
-    regular-grid-interpolator.cpp
+    
+    "regular-grid-interpolator.cpp"
+    
     grid-axis.cpp
 )
 

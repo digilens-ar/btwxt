@@ -11,7 +11,6 @@
 #include <fmt/format.h>
 
 // btwxt
-#include "regular-grid-interpolator-implementation.h"
 #include <btwxt/btwxt.h>
 
 #define EXPECT_STDOUT(action, expected_stdout)                                                     \
