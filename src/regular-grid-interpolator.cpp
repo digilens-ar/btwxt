@@ -67,9 +67,4 @@ std::vector<double> RegularGridInterpolator::solve(const std::vector<double>& ta
     return implementation->solve(target);
 }
 
-const std::vector<TargetBoundsStatus>& RegularGridInterpolator::get_target_bounds_status() const
-{
-    return implementation->get_target_bounds_status();
-}
-
 } // namespace Btwxt

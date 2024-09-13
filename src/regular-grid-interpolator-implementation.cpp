@@ -19,8 +19,6 @@ RegularGridInterpolatorImplementation::RegularGridInterpolatorImplementation(
     , grid_point_data_sets(grid_point_data_sets)
     , grid_axis_lengths(grid_axes.size())
     , grid_axis_step_size(grid_axes.size())
-    , floor_grid_point_coordinates(grid_axes.size(), 0)
-    , target_bounds_status(grid_axes.size())
     , methods(grid_axes.size(), Method::undefined)
     , results(grid_point_data_sets.size(), 0.)
 {
@@ -36,25 +34,61 @@ RegularGridInterpolatorImplementation::RegularGridInterpolatorImplementation(
 
     // Check grid point data set sizes
     for (const auto& grid_point_data_set : grid_point_data_sets) {
-        check_grid_point_data_set_size(grid_point_data_set);
+        if (grid_point_data_set.size() != number_of_grid_points) {
+            throw std::runtime_error(std::format(
+            "GridPointDataSet: Size ({}) does not match number of grid points ({}).",
+            grid_point_data_set.size(),
+            number_of_grid_points));
+        }
     }
 }
 
 std::vector<double> RegularGridInterpolatorImplementation::solve(const std::vector<double>& target_in)
 {
     //set_target
-    if (target_in.size() != grid_axes.size()) {
-        throw std::runtime_error(std::format("Target (size={}) and grid (size={}) do not have the same dimensions.",
-                        target_in.size(),
-                        grid_axes.size()));
-    }
+    assert(target_in.size() == grid_axes.size());
+    std::vector<std::size_t> floor_grid_point_coordinates(grid_axes.size(), 0); // coordinates of the grid point <= target
+    std::vector<TargetBoundsStatus> target_bounds_status(grid_axes.size(), TargetBoundsStatus::interpolate);
     for (std::size_t axis_index = 0; axis_index < grid_axes.size(); axis_index += 1) {
-        set_axis_floor_grid_point_index(axis_index, target_in);
+        const auto& axis_values = grid_axes[axis_index].get_values();
+        int length = static_cast<int>(grid_axis_lengths[axis_index]);
+        if (target_in[axis_index] < grid_axes[axis_index].get_extrapolation_limits().first) {
+            target_bounds_status[axis_index] = TargetBoundsStatus::below_lower_extrapolation_limit;
+            floor_grid_point_coordinates[axis_index] = 0u;
+        }
+        else if (target_in[axis_index] > grid_axes[axis_index].get_extrapolation_limits().second) {
+            target_bounds_status[axis_index] = TargetBoundsStatus::above_upper_extrapolation_limit;
+            floor_grid_point_coordinates[axis_index] =
+                std::max(length - 2,
+                         0); // length-2 because that's the left side of the (length-2, length-1) edge.
+        }
+        else if (target_in[axis_index] < axis_values[0]) {
+            target_bounds_status[axis_index] = TargetBoundsStatus::extrapolate_low;
+            floor_grid_point_coordinates[axis_index] = 0;
+        }
+        else if (target_in[axis_index] > axis_values.back()) {
+            target_bounds_status[axis_index] = TargetBoundsStatus::extrapolate_high;
+            floor_grid_point_coordinates[axis_index] =
+                std::max(length - 2,
+                         0); // length-2 because that's the left side of the (length-2, length-1) edge.
+        }
+        else if (target_in[axis_index] == axis_values.back()) {
+            target_bounds_status[axis_index] = TargetBoundsStatus::interpolate;
+            floor_grid_point_coordinates[axis_index] =
+                std::max(length - 2,
+                         0); // length-2 because that's the left side of the (length-2, length-1) edge.
+        }
+        else {
+            target_bounds_status[axis_index] = TargetBoundsStatus::interpolate;
+            auto upper = std::upper_bound(axis_values.begin(), axis_values.end(), target_in[axis_index]);
+            floor_grid_point_coordinates[axis_index] = upper - axis_values.begin() - 1;
+        }
     }
-    floor_grid_point_index = get_grid_point_index(floor_grid_point_coordinates);
-    std::vector<double> floor_to_ceiling_fractions = calculate_floor_to_ceiling_fractions(target_in);
-    consolidate_methods(floor_to_ceiling_fractions, target_in);
-    auto weighting_factors = calculate_interpolation_coefficients(floor_to_ceiling_fractions);
+     
+    std::vector<double> floor_to_ceiling_fractions = calculate_floor_to_ceiling_fractions(target_in, floor_grid_point_coordinates);
+    consolidate_methods(floor_to_ceiling_fractions, target_in, target_bounds_status);
+    auto weighting_factors = calculate_interpolation_coefficients(floor_to_ceiling_fractions, floor_grid_point_coordinates);
+    set_hypercube_grid_point_data(floor_grid_point_coordinates);
     set_results(weighting_factors);
 
     //get_results
@@ -121,20 +155,8 @@ double RegularGridInterpolatorImplementation::get_grid_point_weighting_factor(
 
 // private methods
 
-void RegularGridInterpolatorImplementation::check_grid_point_data_set_size(
-    const GridPointDataSet& grid_point_data_set)
-{
-    if (grid_point_data_set.size() != number_of_grid_points) {
-         throw std::runtime_error(std::format(
-            "GridPointDataSet: Size ({}) does not match number of grid points ({}).",
-            grid_point_data_set.size(),
-            number_of_grid_points));
-    }
-}
-
 void RegularGridInterpolatorImplementation::set_results(std::vector<std::array<double, 4>> const& weighting_factors)
 {
-    set_hypercube_grid_point_data();
     std::fill(results.begin(), results.end(), 0.0);
     for (std::size_t hypercube_index = 0; hypercube_index < hypercube.size(); ++hypercube_index) {
         hypercube_weights[hypercube_index] =
@@ -169,43 +191,6 @@ std::size_t RegularGridInterpolatorImplementation::get_grid_point_index_relative
     return get_grid_point_index(temporary_coordinates);
 }
 
-void RegularGridInterpolatorImplementation::set_axis_floor_grid_point_index(std::size_t axis_index, std::vector<double> const& target)
-{
-    const auto& axis_values = grid_axes[axis_index].get_values();
-    int length = static_cast<int>(grid_axis_lengths[axis_index]);
-    if (target[axis_index] < grid_axes[axis_index].get_extrapolation_limits().first) {
-        target_bounds_status[axis_index] = TargetBoundsStatus::below_lower_extrapolation_limit;
-        floor_grid_point_coordinates[axis_index] = 0u;
-    }
-    else if (target[axis_index] > grid_axes[axis_index].get_extrapolation_limits().second) {
-        target_bounds_status[axis_index] = TargetBoundsStatus::above_upper_extrapolation_limit;
-        floor_grid_point_coordinates[axis_index] =
-            std::max(length - 2,
-                     0); // length-2 because that's the left side of the (length-2, length-1) edge.
-    }
-    else if (target[axis_index] < axis_values[0]) {
-        target_bounds_status[axis_index] = TargetBoundsStatus::extrapolate_low;
-        floor_grid_point_coordinates[axis_index] = 0;
-    }
-    else if (target[axis_index] > axis_values.back()) {
-        target_bounds_status[axis_index] = TargetBoundsStatus::extrapolate_high;
-        floor_grid_point_coordinates[axis_index] =
-            std::max(length - 2,
-                     0); // length-2 because that's the left side of the (length-2, length-1) edge.
-    }
-    else if (target[axis_index] == axis_values.back()) {
-        target_bounds_status[axis_index] = TargetBoundsStatus::interpolate;
-        floor_grid_point_coordinates[axis_index] =
-            std::max(length - 2,
-                     0); // length-2 because that's the left side of the (length-2, length-1) edge.
-    }
-    else {
-        target_bounds_status[axis_index] = TargetBoundsStatus::interpolate;
-        auto upper = std::upper_bound(axis_values.begin(), axis_values.end(), target[axis_index]);
-        floor_grid_point_coordinates[axis_index] = upper - axis_values.begin() - 1;
-    }
-}
-
 void RegularGridInterpolatorImplementation::check_axis_index(std::size_t axis_index,
     const std::string& action_description) const
 {
@@ -230,7 +215,7 @@ void RegularGridInterpolatorImplementation::check_data_set_index(std::size_t dat
     }
 }
 
-std::vector<double> RegularGridInterpolatorImplementation::calculate_floor_to_ceiling_fractions(std::vector<double> const& target) const
+std::vector<double> RegularGridInterpolatorImplementation::calculate_floor_to_ceiling_fractions(std::vector<double> const& target, std::vector<size_t> const& floor_grid_point_coordinates) const
 {
     auto compute_fraction = [](double x, double start, double end) -> double
     {
@@ -254,7 +239,8 @@ std::vector<double> RegularGridInterpolatorImplementation::calculate_floor_to_ce
     return out;
 }
 
-void RegularGridInterpolatorImplementation::consolidate_methods(std::vector<double> const& floor_to_ceiling_fractions, std::vector<double> const& target)
+void RegularGridInterpolatorImplementation::consolidate_methods(std::vector<double> const& floor_to_ceiling_fractions, std::vector<double> const& target, std::vector<
+                                                                TargetBoundsStatus> const& target_bounds_status)
 // If out of bounds, extrapolate according to prescription
 // If outside of extrapolation limits, send a warning and perform constant extrapolation.
 {
@@ -286,14 +272,12 @@ void RegularGridInterpolatorImplementation::consolidate_methods(std::vector<doub
                                    target[axis_index],
                                    "below",
                                    grid_axes[axis_index].get_extrapolation_limits().first));
-            break;
         case TargetBoundsStatus::above_upper_extrapolation_limit:
              throw std::runtime_error(std::format(error_format,
                                    axis_index,
                                    target[axis_index],
                                    "above",
                                    grid_axes[axis_index].get_extrapolation_limits().second));
-            break;
         case TargetBoundsStatus::interpolate:
             break;
         }
@@ -343,7 +327,7 @@ void RegularGridInterpolatorImplementation::set_hypercube(std::vector<Method> me
     }
 }
 
-std::vector<std::array<double, 4>> RegularGridInterpolatorImplementation::calculate_interpolation_coefficients(std::vector<double> const& floor_to_ceiling_fractions) const
+std::vector<std::array<double, 4>> RegularGridInterpolatorImplementation::calculate_interpolation_coefficients(std::vector<double> const& floor_to_ceiling_fractions, std::vector<size_t> const& floor_grid_point_coordinates) const
 {
     static constexpr std::size_t floor = 0;
     static constexpr std::size_t ceiling = 1;
@@ -382,8 +366,9 @@ std::vector<std::array<double, 4>> RegularGridInterpolatorImplementation::calcul
     return weighting_factors;
 }
 
-void RegularGridInterpolatorImplementation::set_hypercube_grid_point_data()
+void RegularGridInterpolatorImplementation::set_hypercube_grid_point_data(std::vector<size_t> const& floor_grid_point_coordinates)
 {
+    const size_t floor_grid_point_index = get_grid_point_index(floor_grid_point_coordinates); // Index of the floor_grid_point_coordinates (used for hypercube caching)
     if (hypercube_cache.count({floor_grid_point_index, hypercube_size_hash})) {
         hypercube_grid_point_data =
             hypercube_cache.at({floor_grid_point_index, hypercube_size_hash});

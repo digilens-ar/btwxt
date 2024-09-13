@@ -59,16 +59,6 @@ class RegularGridInterpolatorImplementation {
         return grid_axis_lengths;
     };
 
-    [[nodiscard]] const std::vector<TargetBoundsStatus>& get_target_bounds_status() const
-    {
-        return target_bounds_status;
-    };
-
-    [[nodiscard]] const std::vector<std::size_t>& get_floor_grid_point_coordinates() const
-    {
-        return floor_grid_point_coordinates;
-    };
-
     std::vector<double> get_grid_point_data(const std::vector<std::size_t>& coordinates);
 
     std::vector<double> get_grid_point_data_relative(const std::vector<std::size_t>& coordinates,
@@ -90,13 +80,7 @@ class RegularGridInterpolatorImplementation {
                                                     // indices (size = number_of_grid_axes)
 
     // calculated data
-    std::vector<std::size_t>
-        floor_grid_point_coordinates; // coordinates of the grid point <= target
-    std::size_t floor_grid_point_index {
-        0u}; // Index of the floor_grid_point_coordinates (used for hypercube caching)
-     
-    std::vector<TargetBoundsStatus>
-        target_bounds_status; // for each axis, for deciding interpolation vs. extrapolation;
+
     std::vector<Method> methods;
     std::vector<std::vector<short>> hypercube; // A minimal set of indices near the target needed to
                                                // perform interpolation calculations.
@@ -115,23 +99,20 @@ class RegularGridInterpolatorImplementation {
     std::size_t get_grid_point_index_relative(const std::vector<std::size_t>& coordinates,
                                               const std::vector<short>& translation);
 
-    void check_grid_point_data_set_size(const GridPointDataSet& grid_point_data_set);
-
     // for each axis, the fraction the target value
     // is between its floor and ceiling axis values
-    std::vector<double> calculate_floor_to_ceiling_fractions(std::vector<double> const& target) const;
+    std::vector<double> calculate_floor_to_ceiling_fractions(std::vector<double> const& target, std::vector<size_t> const& floor_grid_point_coordinates) const;
 
-    void consolidate_methods(std::vector<double> const& floor_to_ceiling_fractions, std::vector<double> const& target);
+    void consolidate_methods(std::vector<double> const& floor_to_ceiling_fractions, std::vector<double> const& target, std::vector<
+                             TargetBoundsStatus> const& target_bounds_status);
 
-    std::vector<std::array<double, 4>> calculate_interpolation_coefficients(std::vector<double> const& floor_to_ceiling_fractions) const;
+    std::vector<std::array<double, 4>> calculate_interpolation_coefficients(std::vector<double> const& floor_to_ceiling_fractions, std::vector<size_t> const& floor_grid_point_coordinates) const;
 
     void set_hypercube(std::vector<Method> methods, std::vector<double> const& floor_to_ceiling_fractions);
 
-    void set_hypercube_grid_point_data();
+    void set_hypercube_grid_point_data(std::vector<size_t> const& floor_grid_point_coordinates);
 
     void set_results(std::vector<std::array<double, 4>> const& weighting_factors);
-
-    void set_axis_floor_grid_point_index(std::size_t axis_index, std::vector<double> const& target);
 
     void check_axis_index(std::size_t axis_index, const std::string& action_description) const;
 

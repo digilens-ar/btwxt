@@ -51,8 +51,6 @@ class RegularGridInterpolator {
     // Get results
     std::vector<double> solve(const std::vector<double>& target);
 
-    [[nodiscard]] const std::vector<TargetBoundsStatus>& get_target_bounds_status() const;
-
   private:
     std::unique_ptr<RegularGridInterpolatorImplementation> implementation;
 };

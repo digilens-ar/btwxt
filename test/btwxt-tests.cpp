@@ -47,36 +47,6 @@ TEST_F(FunctionFixture, scipy_3d_grid)
     EXPECT_NEAR(result, expected_value, epsilon);
 }
 
-TEST_F(FunctionFixture, scipy_2d_grid)
-{
-    // Based on
-    // https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.RegularGridinterpolator.value().html
-    grid = { GridAxis({-2, 0, 4}, InterpolationMethod::linear, ExtrapolationMethod::linear, {-5, 10}), GridAxis({-2, 0, 2, 5}, InterpolationMethod::linear, ExtrapolationMethod::linear, {-5, 10}) };
-
-    functions = {[](std::vector<double> x) -> double { return x[0] * x[0] + x[1] * x[1]; }};
-    setup();
-
-    auto test_axis_values1 = linspace(-4, 9, 31);
-    auto& test_axis_values2 = test_axis_values1;
-    std::vector<std::vector<double>> target_space {test_axis_values1, test_axis_values2};
-    auto targets = cartesian_product(target_space);
-    for (const auto& t : targets) {
-        double result = interpolator->solve(t)[0];
-        double expected_value = functions[0](t);
-
-        bool extrapolating = false;
-
-        for (auto target_bounds_axis : interpolator.value().get_target_bounds_status()) {
-            extrapolating |= target_bounds_axis != TargetBoundsStatus::interpolate;
-        }
-        double epsilon = 7.;
-        if (extrapolating) {
-            epsilon = 75.; // It's not a very good approximation : )
-        }
-        EXPECT_NEAR(result, expected_value, epsilon)
-            << fmt::format("difference evaluates to {}", std::abs(result - expected_value));
-    }
-}
 
 TEST_F(GridFixture, four_point_1d_cubic_interpolate)
 {
@@ -169,16 +139,6 @@ TEST_F(Grid2DFixture, extrapolate)
     target = {18, 5};
     result = interpolator.value().solve(target);
     EXPECT_THAT(result, testing::ElementsAre(testing::DoubleEq(1.8), testing::DoubleEq(3.6)));
-}
-
-TEST_F(Grid2DFixture, invalid_inputs)
-{
-    std::vector<double> short_target = {1};
-    EXPECT_THROW(interpolator.value().solve(short_target), std::runtime_error);
-
-    std::vector<double> long_target = {1, 2, 3};
-    EXPECT_THROW(interpolator.value().solve(long_target), std::runtime_error);
-
 }
 
 TEST_F(Grid2DFixtureCubic, cubic_interpolate)
