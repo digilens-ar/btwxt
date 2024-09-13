@@ -73,18 +73,17 @@ std::vector<double> RegularGridInterpolatorImplementation::solve(const std::vect
     }
      
     std::vector<double> floor_to_ceiling_fractions = calculate_floor_to_ceiling_fractions(target_in, floor_grid_point_coordinates);
-    consolidate_methods(floor_to_ceiling_fractions, target_in, target_bounds_status);
+    consolidate_methods(floor_to_ceiling_fractions, target_bounds_status);
     auto weighting_factors = calculate_interpolation_coefficients(floor_to_ceiling_fractions, floor_grid_point_coordinates);
-    set_hypercube_grid_point_data(floor_grid_point_coordinates);
+    auto hypercube_grid_point_data = set_hypercube_grid_point_data(floor_grid_point_coordinates);
     // get results
     std::vector<double> results(grid_point_data_sets.size(), 0);
     for (std::size_t hypercube_index = 0; hypercube_index < hypercube.size(); ++hypercube_index) {
-        hypercube_weights[hypercube_index] =
-            get_grid_point_weighting_factor(hypercube[hypercube_index], weighting_factors);
+        const double hypercube_weight = get_grid_point_weighting_factor(hypercube[hypercube_index], weighting_factors);
         for (std::size_t data_set_index = 0; data_set_index < grid_point_data_sets.size();
              ++data_set_index) {
             results[data_set_index] += hypercube_grid_point_data[hypercube_index][data_set_index] *
-                                       hypercube_weights[hypercube_index];
+                                       hypercube_weight;
         }
     }
     return results;
@@ -191,7 +190,7 @@ std::vector<double> RegularGridInterpolatorImplementation::calculate_floor_to_ce
     return out;
 }
 
-void RegularGridInterpolatorImplementation::consolidate_methods(std::vector<double> const& floor_to_ceiling_fractions, std::vector<double> const& target, std::vector<
+void RegularGridInterpolatorImplementation::consolidate_methods(std::vector<double> const& floor_to_ceiling_fractions, std::vector<
                                                                 TargetBoundsStatus> const& target_bounds_status)
 // If out of bounds, extrapolate according to prescription
 // If outside of extrapolation limits, send a warning and perform constant extrapolation.
@@ -199,9 +198,6 @@ void RegularGridInterpolatorImplementation::consolidate_methods(std::vector<doub
     std::vector<Method> previous_methods = methods;
     methods = get_interpolation_methods();
 
-    constexpr std::string_view error_format {
-        "GridAxis '{}': The target ({:.6g}) is {} the extrapolation "
-        "limit ({:.6g})."};
     for (std::size_t axis_index = 0; axis_index < grid_axes.size(); axis_index++) {
         switch (target_bounds_status[axis_index]) {
         case TargetBoundsStatus::extrapolate_low:
@@ -250,11 +246,6 @@ void RegularGridInterpolatorImplementation::set_hypercube(std::vector<Method> me
         }
         hypercube = std::move(r);
     }
-    if (hypercube.size() != previous_size) {
-        hypercube_grid_point_data.resize(hypercube.size(),
-                                         std::vector<double>(grid_point_data_sets.size()));
-        hypercube_weights.resize(hypercube.size());
-    }
 }
 
 std::vector<std::array<double, 4>> RegularGridInterpolatorImplementation::calculate_interpolation_coefficients(std::vector<double> const& floor_to_ceiling_fractions, std::vector<size_t> const& floor_grid_point_coordinates) const
@@ -296,20 +287,22 @@ std::vector<std::array<double, 4>> RegularGridInterpolatorImplementation::calcul
     return weighting_factors;
 }
 
-void RegularGridInterpolatorImplementation::set_hypercube_grid_point_data(std::vector<size_t> const& floor_grid_point_coordinates)
+std::vector<std::vector<double>>
+RegularGridInterpolatorImplementation::set_hypercube_grid_point_data(
+    std::vector<size_t> const& floor_grid_point_coordinates)
 {
     const size_t floor_grid_point_index = get_grid_point_index(floor_grid_point_coordinates); // Index of the floor_grid_point_coordinates (used for hypercube caching)
     if (hypercube_cache.count({floor_grid_point_index, hypercube_size_hash})) {
-        hypercube_grid_point_data =
-            hypercube_cache.at({floor_grid_point_index, hypercube_size_hash});
-        return;
+        return hypercube_cache.at({floor_grid_point_index, hypercube_size_hash});
     }
     std::size_t hypercube_index = 0;
+    std::vector<std::vector<double>> hypercube_grid_point_data(hypercube.size(), std::vector<double>(grid_point_data_sets.size()));
     for (const auto& v : hypercube) {
         hypercube_grid_point_data[hypercube_index] =
             get_grid_point_data_relative(floor_grid_point_coordinates, v);
         ++hypercube_index;
     }
     hypercube_cache[{floor_grid_point_index, hypercube_size_hash}] = hypercube_grid_point_data;
+    return hypercube_grid_point_data;
 }
 } // namespace Btwxt

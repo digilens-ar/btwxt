@@ -77,9 +77,6 @@ class RegularGridInterpolatorImplementation {
                                                // perform interpolation calculations.
     bool reset_hypercube {false};
 
-    std::vector<std::vector<double>> hypercube_grid_point_data;
-    std::vector<double> hypercube_weights;
-
     std::map<std::pair<std::size_t, std::size_t>, std::vector<std::vector<double>>> hypercube_cache;
 
     std::size_t hypercube_size_hash {0u};
@@ -92,14 +89,15 @@ class RegularGridInterpolatorImplementation {
     // is between its floor and ceiling axis values
     std::vector<double> calculate_floor_to_ceiling_fractions(std::vector<double> const& target, std::vector<size_t> const& floor_grid_point_coordinates) const;
 
-    void consolidate_methods(std::vector<double> const& floor_to_ceiling_fractions, std::vector<double> const& target, std::vector<
+    void consolidate_methods(std::vector<double> const& floor_to_ceiling_fractions, std::vector<
                              TargetBoundsStatus> const& target_bounds_status);
 
     std::vector<std::array<double, 4>> calculate_interpolation_coefficients(std::vector<double> const& floor_to_ceiling_fractions, std::vector<size_t> const& floor_grid_point_coordinates) const;
 
     void set_hypercube(std::vector<Method> methods, std::vector<double> const& floor_to_ceiling_fractions);
 
-    void set_hypercube_grid_point_data(std::vector<size_t> const& floor_grid_point_coordinates);
+    std::vector<std::vector<double>> set_hypercube_grid_point_data(
+        std::vector<size_t> const& floor_grid_point_coordinates);
 
     [[nodiscard]] std::vector<Method> get_interpolation_methods() const;
 
