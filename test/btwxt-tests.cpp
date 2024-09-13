@@ -72,7 +72,7 @@ TEST_F(GridFixture, empty_grid_throw_test)
 
 TEST_F(GridFixture, single_point_1d_extrapolate)
 {
-    grid = {GridAxis({2.}, InterpolationMethod::linear, ExtrapolationMethod::linear)};
+    grid = {GridAxis({2.}, InterpolationMethod::linear)};
     data_sets = {{5.}};
     target = {2.5};
     setup();
@@ -134,11 +134,6 @@ TEST_F(Grid2DFixture, extrapolate)
     target = {10, 3};
     std::vector<double> result = interpolator->solve(target);
     EXPECT_THAT(result, testing::ElementsAre(testing::DoubleEq(2), testing::DoubleEq(4)));
-
-    // axis0 is designated linear extrapolation
-    target = {18, 5};
-    result = interpolator.value().solve(target);
-    EXPECT_THAT(result, testing::ElementsAre(testing::DoubleEq(1.8), testing::DoubleEq(3.6)));
 }
 
 TEST_F(Grid2DFixtureCubic, cubic_interpolate)

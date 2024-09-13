@@ -19,9 +19,7 @@ inline std::vector<GridAxis> construct_grid_axes(const std::vector<std::vector<d
     grid_axes.reserve(grid_axis_vectors.size());
     for (const auto& axis : grid_axis_vectors) {
         grid_axes.emplace_back(axis,
-                               InterpolationMethod::linear,
-                               ExtrapolationMethod::constant,
-                               std::pair<double, double> {-DBL_MAX, DBL_MAX});
+                               InterpolationMethod::linear);
     }
     return grid_axes;
 }
@@ -51,7 +49,7 @@ class GridImplementationFixture : public testing::Test {
 class Grid2DImplementationFixture : public GridImplementationFixture {
   protected:
     Grid2DImplementationFixture():
-        GridImplementationFixture({GridAxis({0, 10, 15}, InterpolationMethod::linear, ExtrapolationMethod::linear), GridAxis({4, 6})},  {{6,
+        GridImplementationFixture({GridAxis({0, 10, 15}, InterpolationMethod::linear), GridAxis({4, 6})},  {{6,
                       3,   // 0
                       2,
                       8,   // 10

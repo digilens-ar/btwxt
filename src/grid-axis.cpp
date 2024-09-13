@@ -7,31 +7,16 @@
 namespace Btwxt {
 
 GridAxis::GridAxis(std::vector<double> values_in,
-                   InterpolationMethod int_method,
-                   ExtrapolationMethod ext_method,
-                   std::pair<double, double> ext_limits)
+                   InterpolationMethod int_method)
     :
     values(std::move(values_in))
     , interpolation_method(int_method)
-    , extrapolation_method(ext_method)
-    , extrapolation_limits(std::move(ext_limits))
 {
     if (values.empty()) {
         throw std::runtime_error("Cannot create grid axis from a zero-length vector.");
     }
     if (!vector_is_valid(values)) {
         throw std::runtime_error("Values are not sorted, or have duplicates.");
-    }
-
-    constexpr std::string_view error_format {"{} extrapolation limit ({:.6g}) is within the range "
-                                             "of grid axis values [{:.6g}, {:.6g}]."};
-    if (extrapolation_limits.first > values[0]) {
-        throw std::runtime_error(fmt::format(
-            error_format, "Lower", extrapolation_limits.first, values[0], values.back()));
-    }
-    if (extrapolation_limits.second < values.back()) {
-        throw std::runtime_error(fmt::format(
-            error_format, "Upper", extrapolation_limits.second, values[0], values.back()));
     }
 
     std::fill(cubic_spacing_ratios.begin(), cubic_spacing_ratios.end(), std::vector<double>(values.size() - 1, 1.0));

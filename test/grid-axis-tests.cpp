@@ -45,21 +45,10 @@ TEST(GridAxis, calculate_cubic_spacing_ratios)
     static constexpr std::size_t floor = 0;
     static constexpr std::size_t ceiling = 1;
 
-    GridAxis grid_axis({6., 10., 15., 20., 22.},
-                       InterpolationMethod::cubic,
-                       ExtrapolationMethod::constant,
-                       {-DBL_MAX, DBL_MAX});
+    GridAxis grid_axis({6., 10., 15., 20., 22.}, InterpolationMethod::cubic);
     EXPECT_THAT(grid_axis.get_cubic_spacing_ratios(floor),
                 testing::ElementsAre(1, 5.0 / 9, 0.5, 2.0 / 7));
     EXPECT_THAT(grid_axis.get_cubic_spacing_ratios(ceiling),
                 testing::ElementsAre(4.0 / 9, 0.5, 5.0 / 7, 1));
-}
-
-TEST(GridAxis, bad_limits)
-{
-    EXPECT_THROW(GridAxis my_grid_axis({0., 5., 7., 11., 12., 15.}, InterpolationMethod::linear, ExtrapolationMethod::constant, {4, 17}), std::runtime_error);
-
-    EXPECT_THROW(GridAxis my_grid_axis({0., 5., 7., 11., 12., 15.}, InterpolationMethod::linear, ExtrapolationMethod::constant, {-2, 12}),
-                               std::runtime_error);
 }
 } // namespace Btwxt

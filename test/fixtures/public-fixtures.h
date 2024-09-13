@@ -47,7 +47,7 @@ class Grid2DFixture : public GridFixture {
   protected:
     Grid2DFixture()
     {
-        grid = {GridAxis({0, 10, 15}, InterpolationMethod::linear, ExtrapolationMethod::linear), GridAxis({4, 6})};
+        grid = {GridAxis({0, 10, 15}), GridAxis({4, 6})};
         //         4  6
         data_sets = {{6,
                       3,   // 0
@@ -70,7 +70,7 @@ class Grid2DFixtureCubic : public GridFixture {
   protected:
     Grid2DFixtureCubic()
     {
-        grid = {GridAxis({0, 10, 15}, InterpolationMethod::cubic, ExtrapolationMethod::linear), GridAxis({4, 6}, InterpolationMethod::cubic)};
+        grid = {GridAxis({0, 10, 15}, InterpolationMethod::cubic), GridAxis({4, 6}, InterpolationMethod::cubic)};
         //         4  6
         data_sets = {{6,
                       3,   // 0

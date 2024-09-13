@@ -17,11 +17,9 @@ using GridPointDataSet = std::vector<double>; // Data corresponding to all point
 class RegularGridInterpolatorImplementation;
 
 enum class TargetBoundsStatus {
-    below_lower_extrapolation_limit,
     extrapolate_low,
     interpolate,
     extrapolate_high,
-    above_upper_extrapolation_limit
 };
 
 // this will be the public-facing class.

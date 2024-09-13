@@ -52,17 +52,7 @@ std::vector<double> RegularGridInterpolatorImplementation::solve(const std::vect
     for (std::size_t axis_index = 0; axis_index < grid_axes.size(); axis_index += 1) {
         const auto& axis_values = grid_axes[axis_index].get_values();
         int length = static_cast<int>(grid_axis_lengths[axis_index]);
-        if (target_in[axis_index] < grid_axes[axis_index].get_extrapolation_limits().first) {
-            target_bounds_status[axis_index] = TargetBoundsStatus::below_lower_extrapolation_limit;
-            floor_grid_point_coordinates[axis_index] = 0u;
-        }
-        else if (target_in[axis_index] > grid_axes[axis_index].get_extrapolation_limits().second) {
-            target_bounds_status[axis_index] = TargetBoundsStatus::above_upper_extrapolation_limit;
-            floor_grid_point_coordinates[axis_index] =
-                std::max(length - 2,
-                         0); // length-2 because that's the left side of the (length-2, length-1) edge.
-        }
-        else if (target_in[axis_index] < axis_values[0]) {
+        if (target_in[axis_index] < axis_values[0]) {
             target_bounds_status[axis_index] = TargetBoundsStatus::extrapolate_low;
             floor_grid_point_coordinates[axis_index] = 0;
         }
@@ -90,11 +80,6 @@ std::vector<double> RegularGridInterpolatorImplementation::solve(const std::vect
     auto weighting_factors = calculate_interpolation_coefficients(floor_to_ceiling_fractions, floor_grid_point_coordinates);
     set_hypercube_grid_point_data(floor_grid_point_coordinates);
     set_results(weighting_factors);
-
-    //get_results
-    if (grid_point_data_sets.size() == 0u) {
-        throw std::runtime_error("There are no grid point data sets. No results returned.");
-    }
     return results;
 }
 
@@ -247,16 +232,6 @@ void RegularGridInterpolatorImplementation::consolidate_methods(std::vector<doub
     std::vector<Method> previous_methods = methods;
     methods = get_interpolation_methods();
 
-    // get extrapolation methods
-     std::vector<Method> extrapolation_methods(grid_axes.size());
-    static const std::unordered_map<ExtrapolationMethod, Method> extrapolation_method_map {
-        {ExtrapolationMethod::constant, Method::constant},
-        {ExtrapolationMethod::linear, Method::linear}};
-    for (std::size_t axis_index = 0; axis_index < grid_axes.size(); axis_index++) {
-        extrapolation_methods[axis_index] =
-            extrapolation_method_map.at(grid_axes[axis_index].get_extrapolation_method());
-    }
-
     constexpr std::string_view error_format {
         "GridAxis '{}': The target ({:.6g}) is {} the extrapolation "
         "limit ({:.6g})."};
@@ -264,20 +239,8 @@ void RegularGridInterpolatorImplementation::consolidate_methods(std::vector<doub
         switch (target_bounds_status[axis_index]) {
         case TargetBoundsStatus::extrapolate_low:
         case TargetBoundsStatus::extrapolate_high:
-            methods[axis_index] = extrapolation_methods[axis_index];
+            methods[axis_index] = Method::constant;
             break;
-        case TargetBoundsStatus::below_lower_extrapolation_limit:
-             throw std::runtime_error(std::format(error_format,
-                                   axis_index,
-                                   target[axis_index],
-                                   "below",
-                                   grid_axes[axis_index].get_extrapolation_limits().first));
-        case TargetBoundsStatus::above_upper_extrapolation_limit:
-             throw std::runtime_error(std::format(error_format,
-                                   axis_index,
-                                   target[axis_index],
-                                   "above",
-                                   grid_axes[axis_index].get_extrapolation_limits().second));
         case TargetBoundsStatus::interpolate:
             break;
         }
