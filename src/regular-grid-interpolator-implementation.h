@@ -21,11 +21,8 @@ class RegularGridInterpolatorImplementation {
 
     RegularGridInterpolatorImplementation(const std::vector<GridAxis>& grid_axes,
                                           const std::vector<GridPointDataSet>& grid_point_data_sets);
-    
-    // Public methods (mirrored)
-    void set_target(const std::vector<double>& target);
 
-    [[nodiscard]] std::vector<double> get_results() const;
+    [[nodiscard]] std::vector<double> solve(std::vector<double> const& target);
 
     // Public getters
 
@@ -73,8 +70,6 @@ class RegularGridInterpolatorImplementation {
     };
 
     std::vector<std::size_t> get_neighboring_indices_at_target(std::vector<double> const& floor_to_ceiling_fractions) const;
-
-    [[nodiscard]] const std::vector<Method>& get_current_methods() const { return methods; };
 
     std::vector<double> get_grid_point_data(const std::vector<std::size_t>& coordinates);
 

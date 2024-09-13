@@ -62,19 +62,9 @@ const GridPointDataSet& RegularGridInterpolator::get_grid_point_data_set(std::si
 }
 
 // Public calculation methods
-void RegularGridInterpolator::set_target(const std::vector<double>& target)
+std::vector<double> RegularGridInterpolator::solve(const std::vector<double>& target)
 {
-    implementation->set_target(target);
-}
-
-double RegularGridInterpolator::get_value_at_target(std::size_t data_set_index) const
-{
-    return implementation->get_results()[data_set_index];
-}
-
-std::vector<double> RegularGridInterpolator::get_values_at_target() const
-{
-    return implementation->get_results();
+    return implementation->solve(target);
 }
 
 const std::vector<TargetBoundsStatus>& RegularGridInterpolator::get_target_bounds_status() const

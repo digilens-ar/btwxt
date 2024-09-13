@@ -41,17 +41,13 @@ RegularGridInterpolatorImplementation::RegularGridInterpolatorImplementation(
     }
 }
 
-void RegularGridInterpolatorImplementation::set_target(const std::vector<double>& target_in)
+std::vector<double> RegularGridInterpolatorImplementation::solve(const std::vector<double>& target_in)
 {
+    //set_target
     if (target_in.size() != grid_axes.size()) {
         throw std::runtime_error(std::format("Target (size={}) and grid (size={}) do not have the same dimensions.",
                         target_in.size(),
                         grid_axes.size()));
-    }
-    if (target_is_set) {
-        if ((target_in == target) && (methods == get_interpolation_methods())) {
-            return;
-        }
     }
     target = target_in;
     target_is_set = true;
@@ -63,10 +59,8 @@ void RegularGridInterpolatorImplementation::set_target(const std::vector<double>
     consolidate_methods(floor_to_ceiling_fractions);
     auto weighting_factors = calculate_interpolation_coefficients(floor_to_ceiling_fractions);
     set_results(weighting_factors);
-}
 
-std::vector<double> RegularGridInterpolatorImplementation::get_results() const
-{
+    //get_results
     if (grid_point_data_sets.size() == 0u) {
         throw std::runtime_error("There are no grid point data sets. No results returned.");
     }

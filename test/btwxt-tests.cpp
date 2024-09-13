@@ -37,14 +37,12 @@ TEST_F(FunctionFixture, scipy_3d_grid)
     double expected_value;
 
     target = {2.1, 6.2, 8.3};
-    interpolator->set_target(target);
-    result = interpolator.value().get_values_at_target()[0];
+    result = interpolator->solve(target)[0];
     expected_value = 125.80469388; // Interpolated value from example
     EXPECT_NEAR(result, expected_value, epsilon);
 
     target = {3.3, 5.2, 7.1};
-    interpolator.value().set_target(target);
-    result = interpolator.value().get_values_at_target()[0];
+    result = interpolator->solve(target)[0];
     expected_value = 146.30069388; // Interpolated value from example
     EXPECT_NEAR(result, expected_value, epsilon);
 }
@@ -63,8 +61,7 @@ TEST_F(FunctionFixture, scipy_2d_grid)
     std::vector<std::vector<double>> target_space {test_axis_values1, test_axis_values2};
     auto targets = cartesian_product(target_space);
     for (const auto& t : targets) {
-        interpolator.value().set_target(t);
-        double result = interpolator.value().get_values_at_target()[0];
+        double result = interpolator->solve(t)[0];
         double expected_value = functions[0](t);
 
         bool extrapolating = false;
@@ -91,8 +88,7 @@ TEST_F(GridFixture, four_point_1d_cubic_interpolate)
 
     const double expected_value = 4.804398;
     const double epsilon = 0.0001;
-    interpolator.value().set_target(target);
-    double result = interpolator.value().get_values_at_target()[0];
+    double result = interpolator->solve(target)[0];
     EXPECT_NEAR(result, expected_value, epsilon);
 }
 
@@ -110,8 +106,8 @@ TEST_F(GridFixture, single_point_1d_extrapolate)
     data_sets = {{5.}};
     target = {2.5};
     setup();
-    interpolator.value().set_target(target);
-    double result = interpolator.value().get_values_at_target()[0];
+    double result = interpolator->solve(target)[0];
+
     EXPECT_NEAR(result, 5., 0.0001);
 }
 
@@ -121,8 +117,8 @@ TEST_F(GridFixture, two_point_cubic_1d_interpolate)
     data_sets = {{6, 3}};
     target = {2.5};
     setup();
-    interpolator.value().set_target(target);
-    double result = interpolator.value().get_values_at_target()[0];
+    double result = interpolator->solve(target)[0];
+
     EXPECT_NEAR(result, 5.25, 0.0001);
 }
 
@@ -145,22 +141,20 @@ TEST_F(GridFixture, get_neighboring_indices)
 
 TEST_F(Grid2DFixture, interpolate)
 {
-    interpolator.value().set_target(target);
+    auto result = interpolator.value().solve(target);
 
     // All values, current target
-    std::vector<double> result = interpolator.value().get_values_at_target();
     EXPECT_THAT(result, testing::ElementsAre(testing::DoubleEq(4.2), testing::DoubleEq(8.4)));
     // Single value, current target
-    double d_result = interpolator.value().get_value_at_target(0);
+    double d_result = result[0];
     EXPECT_DOUBLE_EQ(d_result, 4.2);
 
     std::vector<double> another_target = {8.1, 4.2};
     // All values, fresh target
-    interpolator.value().set_target(another_target);
-    result = interpolator.value().get_values_at_target();
+    result = interpolator.value().solve(another_target);
     EXPECT_THAT(result, testing::ElementsAre(testing::DoubleEq(3.189), testing::DoubleEq(6.378)));
     // Single value, fresh target
-    d_result = interpolator.value().get_value_at_target(1);
+    d_result = result[1];
     EXPECT_DOUBLE_EQ(d_result, 6.378);
 }
 
@@ -168,52 +162,45 @@ TEST_F(Grid2DFixture, extrapolate)
 {
     // axis1 is designated constant extrapolation
     target = {10, 3};
-    interpolator.value().set_target(target);
-    std::vector<double> result = interpolator.value().get_values_at_target();
+    std::vector<double> result = interpolator->solve(target);
     EXPECT_THAT(result, testing::ElementsAre(testing::DoubleEq(2), testing::DoubleEq(4)));
 
     // axis0 is designated linear extrapolation
     target = {18, 5};
-    interpolator.value().set_target(target);
-    result = interpolator.value().get_values_at_target();
+    result = interpolator.value().solve(target);
     EXPECT_THAT(result, testing::ElementsAre(testing::DoubleEq(1.8), testing::DoubleEq(3.6)));
 }
 
 TEST_F(Grid2DFixture, invalid_inputs)
 {
     std::vector<double> short_target = {1};
-    EXPECT_THROW(interpolator.value().set_target(short_target), std::runtime_error);
+    EXPECT_THROW(interpolator.value().solve(short_target), std::runtime_error);
 
     std::vector<double> long_target = {1, 2, 3};
-    EXPECT_THROW(interpolator.value().set_target(long_target), std::runtime_error);
+    EXPECT_THROW(interpolator.value().solve(long_target), std::runtime_error);
 
 }
 
 TEST_F(Grid2DFixtureCubic, cubic_interpolate)
 {
-    interpolator.value().set_target(target);
-
+    auto result = interpolator.value().solve(target);
     // All values, current target
-    std::vector<double> result = interpolator.value().get_values_at_target();
     EXPECT_THAT(result, testing::ElementsAre(testing::DoubleEq(4.416), testing::DoubleEq(8.832)));
 }
 
 TEST_F(Function4DFixture, calculate)
 {
-    interpolator.value().set_target(target);
-
-    std::vector<double> result = interpolator.value().get_values_at_target();
+    auto result = interpolator.value().solve(target);
     EXPECT_NEAR(result[0], functions[0](target), 0.02);
     EXPECT_DOUBLE_EQ(result[1], functions[1](target));
 }
 
 TEST_F(Function4DFixture, timer)
 {
-    interpolator.value().set_target(target);
+    auto result = interpolator.value().solve(target);
 
     // Get starting time point
     auto start = std::chrono::high_resolution_clock::now();
-    std::vector<double> result = interpolator.value().get_values_at_target();
     // Get ending time point
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
@@ -247,8 +234,7 @@ TEST_F(Function4DFixture, multi_timer)
         // Get starting time point
         auto start = std::chrono::high_resolution_clock::now();
         for (const auto& target : set_of_targets) {
-            interpolator.value().set_target(target);
-            std::vector<double> result = interpolator.value().get_values_at_target();
+            auto result = interpolator.value().solve(target);
         }
         // Get ending time point
         auto stop = std::chrono::high_resolution_clock::now();

@@ -49,11 +49,7 @@ class RegularGridInterpolator {
     const GridAxis& get_grid_axis(std::size_t axis_index) const;
 
     // Get results
-    void set_target(const std::vector<double>& target);
-
-    double get_value_at_target(std::size_t data_set_index) const;
-
-    std::vector<double> get_values_at_target() const;
+    std::vector<double> solve(const std::vector<double>& target);
 
     [[nodiscard]] const std::vector<TargetBoundsStatus>& get_target_bounds_status() const;
 

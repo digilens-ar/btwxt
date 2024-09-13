@@ -37,8 +37,7 @@ TEST_F(CubicImplementationFixture, spacing_multiplier)
 
 TEST_F(CubicImplementationFixture, interpolate)
 {
-    interpolator.set_target(target);
-    std::vector<double> result = interpolator.get_results();
+    auto result = interpolator.solve(target);
     EXPECT_THAT(result, testing::ElementsAre(testing::DoubleEq(4.158), testing::DoubleEq(11.836)));
 }
 
@@ -56,19 +55,6 @@ TEST_F(CubicImplementationFixture, get_cubic_spacing_ratios)
             EXPECT_DOUBLE_EQ(result, expected_results[floor_or_ceiling][index]);
         }
     }
-}
-
-TEST_F(Grid2DImplementationFixture, consolidate_methods)
-{
-    interpolator.set_target(target);
-
-    std::vector<Method> expected_methods {Method::linear, Method::linear};
-    EXPECT_EQ(interpolator.get_current_methods(), expected_methods);
-
-    std::vector<double> out_of_bounds_vector = {12, 3};
-    interpolator.set_target(out_of_bounds_vector);
-    expected_methods = {Method::linear, Method::constant};
-    EXPECT_EQ(interpolator.get_current_methods(), expected_methods);
 }
 
 TEST_F(Grid2DImplementationFixture, get_grid_axis)
