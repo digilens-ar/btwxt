@@ -212,11 +212,11 @@ void RegularGridInterpolatorImplementation::set_axis_floor_grid_point_index(std:
 {
     const auto& axis_values = grid_axes[axis_index].get_values();
     int length = static_cast<int>(grid_axis_lengths[axis_index]);
-    if (target[axis_index] < get_extrapolation_limits(axis_index).first) {
+    if (target[axis_index] < grid_axes[axis_index].get_extrapolation_limits().first) {
         target_bounds_status[axis_index] = TargetBoundsStatus::below_lower_extrapolation_limit;
         floor_grid_point_coordinates[axis_index] = 0u;
     }
-    else if (target[axis_index] > get_extrapolation_limits(axis_index).second) {
+    else if (target[axis_index] > grid_axes[axis_index].get_extrapolation_limits().second) {
         target_bounds_status[axis_index] = TargetBoundsStatus::above_upper_extrapolation_limit;
         floor_grid_point_coordinates[axis_index] =
             std::max(length - 2,
@@ -324,14 +324,14 @@ void RegularGridInterpolatorImplementation::consolidate_methods(std::vector<doub
                                        axis_index,
                                        target[axis_index],
                                        "below",
-                                       get_extrapolation_limits(axis_index).first));
+                                       grid_axes[axis_index].get_extrapolation_limits().first));
                 break;
             case TargetBoundsStatus::above_upper_extrapolation_limit:
                  throw std::runtime_error(std::format(error_format,
                                        axis_index,
                                        target[axis_index],
                                        "above",
-                                       get_extrapolation_limits(axis_index).second));
+                                       grid_axes[axis_index].get_extrapolation_limits().second));
                 break;
             case TargetBoundsStatus::interpolate:
                 break;
@@ -398,12 +398,10 @@ std::vector<std::array<double, 4>> RegularGridInterpolatorImplementation::calcul
             interpolation_coefficients[ceiling] = -2 * mu * mu * mu + 3 * mu * mu;
             cubic_slope_coefficients[floor] =
                 (mu * mu * mu - 2 * mu * mu + mu) *
-                get_axis_cubic_spacing_ratios(axis_index,
-                                              floor)[floor_grid_point_coordinates[axis_index]];
+                grid_axes[axis_index].get_cubic_spacing_ratios(floor)[floor_grid_point_coordinates[axis_index]];
             cubic_slope_coefficients[ceiling] =
                 (mu * mu * mu - mu * mu) *
-                get_axis_cubic_spacing_ratios(axis_index,
-                                              ceiling)[floor_grid_point_coordinates[axis_index]];
+                grid_axes[axis_index].get_cubic_spacing_ratios(ceiling)[floor_grid_point_coordinates[axis_index]];
         }
         else {
             if (methods[axis_index] == Method::constant) {

@@ -28,11 +28,6 @@ class RegularGridInterpolatorImplementation {
     [[nodiscard]] std::vector<double> get_results() const;
 
     // Public getters
-    [[nodiscard]] std::pair<double, double> get_extrapolation_limits(std::size_t axis_index) const
-    {
-        check_axis_index(axis_index, "get extrapolation limits");
-        return grid_axes[axis_index].get_extrapolation_limits();
-    };
 
     [[nodiscard]] std::size_t get_number_of_grid_axes() const
     {
@@ -80,14 +75,6 @@ class RegularGridInterpolatorImplementation {
     std::vector<std::size_t> get_neighboring_indices_at_target(std::vector<double> const& floor_to_ceiling_fractions) const;
 
     [[nodiscard]] const std::vector<Method>& get_current_methods() const { return methods; };
-
-
-    [[nodiscard]] const std::vector<double>&
-    get_axis_cubic_spacing_ratios(std::size_t axis_index, std::size_t floor_or_ceiling) const
-    {
-        check_axis_index(axis_index, "get axis cubic spacing ratios");
-        return grid_axes[axis_index].get_cubic_spacing_ratios(floor_or_ceiling);
-    };
 
     std::vector<double> get_grid_point_data(const std::vector<std::size_t>& coordinates);
 

@@ -19,19 +19,19 @@ TEST_F(CubicImplementationFixture, spacing_multiplier)
     static constexpr std::size_t floor = 0;
     static constexpr std::size_t ceiling = 1;
     double result;
-    result = interpolator.get_axis_cubic_spacing_ratios(0, floor)[0];
+    result = interpolator.get_grid_axis(0).get_cubic_spacing_ratios(floor)[0];
     EXPECT_DOUBLE_EQ(result, 1.0);
 
-    result = interpolator.get_axis_cubic_spacing_ratios(0, ceiling)[0];
+    result = interpolator.get_grid_axis(0).get_cubic_spacing_ratios(ceiling)[0];
     EXPECT_DOUBLE_EQ(result, (10. - 6.) / (15.0 - 6.0));
 
-    result = interpolator.get_axis_cubic_spacing_ratios(0, floor)[1];
+    result = interpolator.get_grid_axis(0).get_cubic_spacing_ratios(floor)[1];
     EXPECT_DOUBLE_EQ(result, (15. - 10.) / (15.0 - 6.0));
 
-    result = interpolator.get_axis_cubic_spacing_ratios(0, ceiling)[2];
+    result = interpolator.get_grid_axis(0).get_cubic_spacing_ratios(ceiling)[2];
     EXPECT_DOUBLE_EQ(result, 1.0);
 
-    result = interpolator.get_axis_cubic_spacing_ratios(1, floor)[0];
+    result = interpolator.get_grid_axis(1).get_cubic_spacing_ratios(floor)[0];
     EXPECT_DOUBLE_EQ(result, 1.0);
 }
 
@@ -52,7 +52,7 @@ TEST_F(CubicImplementationFixture, get_cubic_spacing_ratios)
     double result;
     for (std::size_t floor_or_ceiling = 0; floor_or_ceiling <= 1; floor_or_ceiling++) {
         for (std::size_t index = 0; index < 3; index++) {
-            result = interpolator.get_axis_cubic_spacing_ratios(0, floor_or_ceiling)[index];
+            result = interpolator.get_grid_axis(0).get_cubic_spacing_ratios(floor_or_ceiling)[index];
             EXPECT_DOUBLE_EQ(result, expected_results[floor_or_ceiling][index]);
         }
     }
