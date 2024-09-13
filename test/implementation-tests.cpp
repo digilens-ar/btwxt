@@ -63,34 +63,5 @@ TEST_F(Grid2DImplementationFixture, get_grid_axis)
     EXPECT_THAT(returned_vec, testing::ElementsAre(4, 6));
 }
 
-TEST_F(Grid2DImplementationFixture, get_grid_point_data)
-{
-    std::vector<std::size_t> coords = {0, 1};
-    std::vector<double> returned_vec = interpolator.get_grid_point_data(coords);
-    EXPECT_THAT(returned_vec, testing::ElementsAre(3, 6));
-
-    coords = {1, 0};
-    returned_vec = interpolator.get_grid_point_data(coords);
-    EXPECT_THAT(returned_vec, testing::ElementsAre(2, 4));
-}
-
-TEST_F(Grid2DImplementationFixture, get_grid_point_data_relative)
-{
-    std::vector<std::size_t> coords {0, 1};
-    std::vector<short> translation {1, 0}; // {1, 1} stays as is
-    std::vector<double> expected_vec = interpolator.get_grid_point_data({1, 1});
-    EXPECT_EQ(interpolator.get_grid_point_data_relative(coords, translation), expected_vec);
-
-    translation = {1, 1}; // {1, 2} -> {1, 1}
-    EXPECT_EQ(interpolator.get_grid_point_data_relative(coords, translation), expected_vec);
-
-    translation = {-1, 0}; // {-1, 1} -> {0, 1}
-    expected_vec = interpolator.get_grid_point_data({0, 1});
-    EXPECT_EQ(interpolator.get_grid_point_data_relative(coords, translation), expected_vec);
-
-    translation = {3, -2}; // {3, -1} -> {2, 0}
-    expected_vec = interpolator.get_grid_point_data({2, 0});
-    EXPECT_EQ(interpolator.get_grid_point_data_relative(coords, translation), expected_vec);
-}
 
 } // namespace Btwxt
