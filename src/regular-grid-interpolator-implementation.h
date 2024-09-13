@@ -176,8 +176,6 @@ class RegularGridInterpolatorImplementation {
 
     void set_results(std::vector<std::array<double, 4>> const& weighting_factors);
 
-    void set_floor_grid_point_coordinates();
-
     void set_axis_floor_grid_point_index(std::size_t axis_index);
 
     void check_axis_index(std::size_t axis_index, const std::string& action_description) const;

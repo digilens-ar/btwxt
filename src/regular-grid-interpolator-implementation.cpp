@@ -55,7 +55,10 @@ void RegularGridInterpolatorImplementation::set_target(const std::vector<double>
     }
     target = target_in;
     target_is_set = true;
-    set_floor_grid_point_coordinates();
+    for (std::size_t axis_index = 0; axis_index < grid_axes.size(); axis_index += 1) {
+        set_axis_floor_grid_point_index(axis_index);
+    }
+    floor_grid_point_index = get_grid_point_index(floor_grid_point_coordinates);
     std::vector<double> floor_to_ceiling_fractions = calculate_floor_to_ceiling_fractions();
     consolidate_methods(floor_to_ceiling_fractions);
     auto weighting_factors = calculate_interpolation_coefficients(floor_to_ceiling_fractions);
@@ -211,14 +214,6 @@ std::size_t RegularGridInterpolatorImplementation::get_grid_point_index_relative
         }
     }
     return get_grid_point_index(temporary_coordinates);
-}
-
-void RegularGridInterpolatorImplementation::set_floor_grid_point_coordinates()
-{
-    for (std::size_t axis_index = 0; axis_index < grid_axes.size(); axis_index += 1) {
-        set_axis_floor_grid_point_index(axis_index);
-    }
-    floor_grid_point_index = get_grid_point_index(floor_grid_point_coordinates);
 }
 
 void RegularGridInterpolatorImplementation::set_axis_floor_grid_point_index(std::size_t axis_index)
