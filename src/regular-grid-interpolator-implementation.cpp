@@ -167,30 +167,6 @@ std::size_t RegularGridInterpolatorImplementation::get_grid_point_index_relative
     return get_grid_point_index(temporary_coordinates);
 }
 
-void RegularGridInterpolatorImplementation::check_axis_index(std::size_t axis_index,
-    const std::string& action_description) const
-{
-    if (axis_index > grid_axes.size() - 1) {
-         throw std::runtime_error(std::format(
-            "Axis index, {}, does not exist. Unable to {}. Number of grid axes = {}.",
-            axis_index,
-            action_description,
-            grid_axes.size()));
-    }
-}
-
-void RegularGridInterpolatorImplementation::check_data_set_index(std::size_t data_set_index,
-    const std::string& action_description) const
-{
-    if (data_set_index > grid_point_data_sets.size() - 1) {
-        throw std::runtime_error(std::format("Data set index, {}, does not exist. Unable to {}. Number of "
-                               "grid point data sets = {}.",
-                               data_set_index,
-                               action_description,
-                               grid_point_data_sets.size()));
-    }
-}
-
 std::vector<double> RegularGridInterpolatorImplementation::calculate_floor_to_ceiling_fractions(std::vector<double> const& target, std::vector<size_t> const& floor_grid_point_coordinates) const
 {
     auto compute_fraction = [](double x, double start, double end) -> double

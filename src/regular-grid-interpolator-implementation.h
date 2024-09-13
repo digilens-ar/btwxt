@@ -38,14 +38,12 @@ class RegularGridInterpolatorImplementation {
 
     [[nodiscard]] const GridAxis& get_grid_axis(std::size_t axis_index) const
     {
-        check_axis_index(axis_index, "get grid axis");
         return grid_axes[axis_index];
     };
 
     [[nodiscard]] const GridPointDataSet&
     get_grid_point_data_set(std::size_t data_set_index) const
     {
-        check_data_set_index(data_set_index, "get grid point data set");
         return grid_point_data_sets[data_set_index];
     };
 
@@ -102,13 +100,6 @@ class RegularGridInterpolatorImplementation {
     void set_hypercube(std::vector<Method> methods, std::vector<double> const& floor_to_ceiling_fractions);
 
     void set_hypercube_grid_point_data(std::vector<size_t> const& floor_grid_point_coordinates);
-
-    std::vector<double> set_results(std::vector<std::array<double, 4>> const& weighting_factors);
-
-    void check_axis_index(std::size_t axis_index, const std::string& action_description) const;
-
-    void check_data_set_index(std::size_t data_set_index,
-                              const std::string& action_description) const;
 
     [[nodiscard]] std::vector<Method> get_interpolation_methods() const;
 
