@@ -69,8 +69,6 @@ class RegularGridInterpolatorImplementation {
         return floor_grid_point_coordinates;
     };
 
-    std::vector<std::size_t> get_neighboring_indices_at_target(std::vector<double> const& floor_to_ceiling_fractions) const;
-
     std::vector<double> get_grid_point_data(const std::vector<std::size_t>& coordinates);
 
     std::vector<double> get_grid_point_data_relative(const std::vector<std::size_t>& coordinates,
@@ -92,8 +90,6 @@ class RegularGridInterpolatorImplementation {
                                                     // indices (size = number_of_grid_axes)
 
     // calculated data
-    bool target_is_set {false};
-    std::vector<double> target;
     std::vector<std::size_t>
         floor_grid_point_coordinates; // coordinates of the grid point <= target
     std::size_t floor_grid_point_index {
@@ -123,9 +119,9 @@ class RegularGridInterpolatorImplementation {
 
     // for each axis, the fraction the target value
     // is between its floor and ceiling axis values
-    std::vector<double> calculate_floor_to_ceiling_fractions() const;
+    std::vector<double> calculate_floor_to_ceiling_fractions(std::vector<double> const& target) const;
 
-    void consolidate_methods(std::vector<double> const& floor_to_ceiling_fractions);
+    void consolidate_methods(std::vector<double> const& floor_to_ceiling_fractions, std::vector<double> const& target);
 
     std::vector<std::array<double, 4>> calculate_interpolation_coefficients(std::vector<double> const& floor_to_ceiling_fractions) const;
 
@@ -135,7 +131,7 @@ class RegularGridInterpolatorImplementation {
 
     void set_results(std::vector<std::array<double, 4>> const& weighting_factors);
 
-    void set_axis_floor_grid_point_index(std::size_t axis_index);
+    void set_axis_floor_grid_point_index(std::size_t axis_index, std::vector<double> const& target);
 
     void check_axis_index(std::size_t axis_index, const std::string& action_description) const;
 
