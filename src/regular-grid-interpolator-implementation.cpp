@@ -65,14 +65,6 @@ void RegularGridInterpolatorImplementation::set_target(const std::vector<double>
     set_results(weighting_factors);
 }
 
-const std::vector<double>& RegularGridInterpolatorImplementation::get_target() const
-{
-    if (!target_is_set) {
-         throw std::runtime_error("The current target was requested, but no target has been set.");
-    }
-    return target;
-}
-
 std::vector<double> RegularGridInterpolatorImplementation::get_results() const
 {
     if (grid_point_data_sets.size() == 0u) {

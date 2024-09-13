@@ -5,6 +5,7 @@
 #define GRID_AXIS_H_
 
 #include <algorithm>
+#include <array>
 #include <vector>
 
 
@@ -15,20 +16,13 @@ enum class ExtrapolationMethod { constant, linear };
 
 class GridAxis {
     // A single input dimension of the grid
-
   public:
-    // GridAxis() = default;
 
     explicit GridAxis(
         std::vector<double> values,
         InterpolationMethod interpolation_method = InterpolationMethod::linear,
         ExtrapolationMethod extrapolation_method = ExtrapolationMethod::constant,
         std::pair<double, double> extrapolation_limits = {-DBL_MAX, DBL_MAX});
-
-    // Setters
-    void set_interpolation_method(InterpolationMethod interpolation_method_in);
-    void set_extrapolation_method(ExtrapolationMethod extrapolation_method_in);
-    void set_extrapolation_limits(std::pair<double, double> limits);
 
     // Getters
     [[nodiscard]] const std::vector<double>& get_values() const { return values; }
@@ -37,15 +31,14 @@ class GridAxis {
     [[nodiscard]] ExtrapolationMethod get_extrapolation_method() const { return extrapolation_method; }
     [[nodiscard]] std::pair<double, double> get_extrapolation_limits() const { return extrapolation_limits; }
 
-    [[nodiscard]] const std::vector<double>&
-    get_cubic_spacing_ratios(std::size_t floor_or_ceiling) const;
+    [[nodiscard]] const std::vector<double>& get_cubic_spacing_ratios(std::size_t floor_or_ceiling) const;
 
   private:
     std::vector<double> values;
     InterpolationMethod interpolation_method = InterpolationMethod::linear;
     ExtrapolationMethod extrapolation_method = ExtrapolationMethod::constant;
     std::pair<double, double> extrapolation_limits {-DBL_MAX, DBL_MAX};
-    std::vector<std::vector<double>>
+    std::array<std::vector<double>, 2>
         cubic_spacing_ratios; // Used for cubic interpolation. Outer vector is size 2: 0: spacing
                               // for the floor, 1: spacing for the ceiling. Inner vector is length
                               // of axis values, but the floor vector doesn't use the first entry

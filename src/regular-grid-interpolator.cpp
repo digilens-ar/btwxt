@@ -36,25 +36,6 @@ RegularGridInterpolator& RegularGridInterpolator::operator=(const RegularGridInt
     return *this;
 }
 
-
-void RegularGridInterpolator::set_axis_extrapolation_method(const std::size_t axis_index,
-                                                            const ExtrapolationMethod method)
-{
-    implementation->set_axis_extrapolation_method(axis_index, method);
-}
-
-void RegularGridInterpolator::set_axis_interpolation_method(const std::size_t axis_index,
-                                                            const InterpolationMethod method)
-{
-    implementation->set_axis_interpolation_method(axis_index, method);
-}
-
-void RegularGridInterpolator::set_axis_extrapolation_limits(
-    const std::size_t axis_index, const std::pair<double, double>& extrapolation_limits)
-{
-    implementation->set_axis_extrapolation_limits(axis_index, extrapolation_limits);
-}
-
 std::size_t RegularGridInterpolator::get_number_of_dimensions() const
 {
     return implementation->get_number_of_grid_axes();
@@ -94,11 +75,6 @@ double RegularGridInterpolator::get_value_at_target(std::size_t data_set_index) 
 std::vector<double> RegularGridInterpolator::get_values_at_target() const
 {
     return implementation->get_results();
-}
-
-const std::vector<double>& RegularGridInterpolator::get_target() const
-{
-    return implementation->get_target();
 }
 
 const std::vector<TargetBoundsStatus>& RegularGridInterpolator::get_target_bounds_status() const

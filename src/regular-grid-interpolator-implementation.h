@@ -21,32 +21,9 @@ class RegularGridInterpolatorImplementation {
 
     RegularGridInterpolatorImplementation(const std::vector<GridAxis>& grid_axes,
                                           const std::vector<GridPointDataSet>& grid_point_data_sets);
-
-    // Data manipulation and settings
-
-    void set_axis_interpolation_method(std::size_t axis_index, InterpolationMethod method)
-    {
-        check_axis_index(axis_index, "set axis interpolation method");
-        grid_axes[axis_index].set_interpolation_method(method);
-    }
-
-    void set_axis_extrapolation_method(const std::size_t axis_index, ExtrapolationMethod method)
-    {
-        check_axis_index(axis_index, "set axis extrapolation method");
-        grid_axes[axis_index].set_extrapolation_method(method);
-    }
-
-    void set_axis_extrapolation_limits(const std::size_t axis_index,
-                                       const std::pair<double, double>& limits)
-    {
-        check_axis_index(axis_index, "set axis extrapolation limits");
-        grid_axes[axis_index].set_extrapolation_limits(limits);
-    }
-
+    
     // Public methods (mirrored)
     void set_target(const std::vector<double>& target);
-
-    [[nodiscard]] const std::vector<double>& get_target() const;
 
     [[nodiscard]] std::vector<double> get_results() const;
 

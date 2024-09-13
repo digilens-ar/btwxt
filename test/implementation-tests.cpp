@@ -35,36 +35,11 @@ TEST_F(CubicImplementationFixture, spacing_multiplier)
     EXPECT_DOUBLE_EQ(result, 1.0);
 }
 
-TEST_F(CubicImplementationFixture, switch_interp_method)
-{
-    for (auto i = 0u; i < interpolator.get_number_of_grid_axes(); i++) {
-        interpolator.set_axis_interpolation_method(i, InterpolationMethod::cubic);
-    }
-    interpolator.set_target(target);
-    std::vector<double> result1 = interpolator.get_results();
-    for (auto i = 0u; i < interpolator.get_number_of_grid_axes(); i++) {
-        interpolator.set_axis_interpolation_method(i, InterpolationMethod::linear);
-    }
-    interpolator.set_target(target); // TODO this shouldn't be necesary but if we don't do this then the changes to the interpolation method won't be taken into account
-    std::vector<double> result2 = interpolator.get_results();
-    EXPECT_NE(result1, result2);
-}
-
 TEST_F(CubicImplementationFixture, interpolate)
 {
     interpolator.set_target(target);
     std::vector<double> result = interpolator.get_results();
     EXPECT_THAT(result, testing::ElementsAre(testing::DoubleEq(4.158), testing::DoubleEq(11.836)));
-}
-
-TEST_F(CubicImplementationFixture, hypercube_calculations)
-{
-    interpolator.set_axis_interpolation_method(1, InterpolationMethod::cubic);
-    interpolator.set_target(target);
-
-    auto result = interpolator.get_results();
-    EXPECT_NEAR(result[0], 4.1953, 0.0001);
-    EXPECT_NEAR(result[1], 11.9271, 0.0001);
 }
 
 TEST_F(CubicImplementationFixture, get_cubic_spacing_ratios)

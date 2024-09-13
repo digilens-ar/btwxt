@@ -53,14 +53,10 @@ TEST_F(FunctionFixture, scipy_2d_grid)
 {
     // Based on
     // https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.RegularGridinterpolator.value().html
-    grid = { GridAxis({-2, 0, 4}), GridAxis({-2, 0, 2, 5}) };
+    grid = { GridAxis({-2, 0, 4}, InterpolationMethod::linear, ExtrapolationMethod::linear, {-5, 10}), GridAxis({-2, 0, 2, 5}, InterpolationMethod::linear, ExtrapolationMethod::linear, {-5, 10}) };
 
     functions = {[](std::vector<double> x) -> double { return x[0] * x[0] + x[1] * x[1]; }};
     setup();
-    interpolator.value().set_axis_extrapolation_method(0, ExtrapolationMethod::linear);
-    interpolator.value().set_axis_extrapolation_method(1, ExtrapolationMethod::linear);
-    interpolator.value().set_axis_extrapolation_limits(0, {-5, 10});
-    interpolator.value().set_axis_extrapolation_limits(1, {-5, 10});
 
     auto test_axis_values1 = linspace(-4, 9, 31);
     auto& test_axis_values2 = test_axis_values1;
@@ -88,12 +84,10 @@ TEST_F(FunctionFixture, scipy_2d_grid)
 TEST_F(GridFixture, four_point_1d_cubic_interpolate)
 {
 
-    grid = {GridAxis({0, 2, 5, 10})};
+    grid = {GridAxis({0, 2, 5, 10}, InterpolationMethod::cubic)};
     data_sets = {{6, 5, 4, 3}};
     target = {2.5};
     setup();
-
-    interpolator.value().set_axis_interpolation_method(0, InterpolationMethod::cubic);
 
     const double expected_value = 4.804398;
     const double epsilon = 0.0001;
@@ -112,32 +106,21 @@ TEST_F(GridFixture, empty_grid_throw_test)
 
 TEST_F(GridFixture, single_point_1d_extrapolate)
 {
-    grid = {GridAxis({2.})};
+    grid = {GridAxis({2.}, InterpolationMethod::linear, ExtrapolationMethod::linear)};
     data_sets = {{5.}};
     target = {2.5};
     setup();
-    interpolator.value().set_axis_extrapolation_method(0, ExtrapolationMethod::linear);
     interpolator.value().set_target(target);
     double result = interpolator.value().get_values_at_target()[0];
     EXPECT_NEAR(result, 5., 0.0001);
 }
 
-TEST_F(GridFixture, grid_axis_error)
-{
-    grid = {GridAxis({1., 2.})};
-    data_sets = {{5., 5.}};
-    target = {2.5};
-    setup();
-    EXPECT_THROW(interpolator.value().set_axis_extrapolation_limits(0, {0.5, 1.5}), std::runtime_error);
-}
-
 TEST_F(GridFixture, two_point_cubic_1d_interpolate)
 {
-    grid = {GridAxis({0, 10})};
+    grid = {GridAxis({0, 10}, InterpolationMethod::cubic)};
     data_sets = {{6, 3}};
     target = {2.5};
     setup();
-    interpolator.value().set_axis_interpolation_method(0, InterpolationMethod::cubic);
     interpolator.value().set_target(target);
     double result = interpolator.value().get_values_at_target()[0];
     EXPECT_NEAR(result, 5.25, 0.0001);
@@ -159,22 +142,6 @@ TEST_F(GridFixture, get_neighboring_indices)
     setup();
 }
 
-TEST_F(Grid2DFixture, target_undefined)
-{
-    std::vector<double> returned_target;
-
-    // The test fixture does not instantiate a GridPoint.
-    EXPECT_THROW(interpolator.value().get_target(), std::runtime_error);
-
-    EXPECT_THROW(interpolator.value().get_value_at_target(0), std::runtime_error);
-
-    // Define the target; make sure it works now.
-    interpolator.value().set_target(target);
-    std::string empty_out; // intentionally default ""
-    EXPECT_STDOUT(returned_target = interpolator.value().get_target();, empty_out)
-    std::vector<double> expected_result {12, 5};
-    EXPECT_EQ(returned_target, expected_result);
-}
 
 TEST_F(Grid2DFixture, interpolate)
 {
@@ -222,23 +189,13 @@ TEST_F(Grid2DFixture, invalid_inputs)
 
 }
 
-TEST_F(Grid2DFixture, cubic_interpolate)
+TEST_F(Grid2DFixtureCubic, cubic_interpolate)
 {
-    interpolator.value().set_axis_interpolation_method(0, InterpolationMethod::cubic);
-    interpolator.value().set_axis_interpolation_method(1, InterpolationMethod::cubic);
     interpolator.value().set_target(target);
 
     // All values, current target
     std::vector<double> result = interpolator.value().get_values_at_target();
     EXPECT_THAT(result, testing::ElementsAre(testing::DoubleEq(4.416), testing::DoubleEq(8.832)));
-}
-
-TEST_F(Function4DFixture, construct)
-{
-    interpolator.value().set_target(target);
-
-    std::vector<double> returned_target = interpolator.value().get_target();
-    EXPECT_THAT(returned_target, testing::ElementsAre(2.2, 3.3, 1.4, 4.1));
 }
 
 TEST_F(Function4DFixture, calculate)
@@ -248,46 +205,6 @@ TEST_F(Function4DFixture, calculate)
     std::vector<double> result = interpolator.value().get_values_at_target();
     EXPECT_NEAR(result[0], functions[0](target), 0.02);
     EXPECT_DOUBLE_EQ(result[1], functions[1](target));
-}
-
-TEST_F(Function4DFixture, verify_linear)
-{
-    // no matter what we do, result[1] should always be 11!
-    std::vector<double> result;
-
-    interpolator.value().set_target(target);
-    result = interpolator.value().get_values_at_target();
-    EXPECT_DOUBLE_EQ(result[1], 11);
-
-    interpolator.value().set_axis_interpolation_method(0, InterpolationMethod::cubic);
-    interpolator.value().set_target(target);
-    result = interpolator.value().get_values_at_target();
-    EXPECT_DOUBLE_EQ(result[1], 11);
-
-    interpolator.value().set_axis_interpolation_method(3, InterpolationMethod::cubic);
-    interpolator.value().set_target(target);
-    result = interpolator.value().get_values_at_target();
-    EXPECT_DOUBLE_EQ(result[1], 11);
-
-    interpolator.value().set_axis_interpolation_method(0, InterpolationMethod::linear);
-    interpolator.value().set_target(target);
-    result = interpolator.value().get_values_at_target();
-    EXPECT_DOUBLE_EQ(result[1], 11);
-
-    interpolator.value().set_axis_interpolation_method(2, InterpolationMethod::cubic);
-    interpolator.value().set_target(target);
-    result = interpolator.value().get_values_at_target();
-    EXPECT_DOUBLE_EQ(result[1], 11);
-
-    interpolator.value().set_axis_interpolation_method(0, InterpolationMethod::cubic);
-    interpolator.value().set_target(target);
-    result = interpolator.value().get_values_at_target();
-    EXPECT_DOUBLE_EQ(result[1], 11);
-
-    interpolator.value().set_axis_interpolation_method(1, InterpolationMethod::cubic);
-    interpolator.value().set_target(target);
-    result = interpolator.value().get_values_at_target();
-    EXPECT_DOUBLE_EQ(result[1], 11);
 }
 
 TEST_F(Function4DFixture, timer)

@@ -57,13 +57,9 @@ TEST(GridAxis, calculate_cubic_spacing_ratios)
 
 TEST(GridAxis, bad_limits)
 {
-    GridAxis my_grid_axis({0., 5., 7., 11., 12., 15.});
-    std::pair<double, double> extrapolation_limits {4., 17.};
-    EXPECT_THROW(my_grid_axis.set_extrapolation_limits(extrapolation_limits),
-                               std::runtime_error);
+    EXPECT_THROW(GridAxis my_grid_axis({0., 5., 7., 11., 12., 15.}, InterpolationMethod::linear, ExtrapolationMethod::constant, {4, 17}), std::runtime_error);
 
-    extrapolation_limits = {-2., 12.};
-    EXPECT_THROW(my_grid_axis.set_extrapolation_limits(extrapolation_limits),
+    EXPECT_THROW(GridAxis my_grid_axis({0., 5., 7., 11., 12., 15.}, InterpolationMethod::linear, ExtrapolationMethod::constant, {-2, 12}),
                                std::runtime_error);
 }
 } // namespace Btwxt
