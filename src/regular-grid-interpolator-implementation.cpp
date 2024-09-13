@@ -335,6 +335,12 @@ void RegularGridInterpolatorImplementation::check_data_set_index(std::size_t dat
 
 void RegularGridInterpolatorImplementation::calculate_floor_to_ceiling_fractions()
 {
+    auto compute_fraction = [](double x, double start, double end) -> double
+    {
+        // how far along an edge is the target?
+        return (x - start) / (end - start);
+    };
+
     for (std::size_t axis_index = 0; axis_index < grid_axes.size(); ++axis_index) {
         if (grid_axis_lengths[axis_index] > 1) {
             auto& axis_values = grid_axes[axis_index].get_values();

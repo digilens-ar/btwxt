@@ -238,12 +238,6 @@ TEST_F(Grid2DImplementationFixture, get_grid_point_data_relative)
     EXPECT_EQ(interpolator.get_grid_point_data_relative(coords, translation), expected_vec);
 }
 
-TEST(Fractions, compute_fraction)
-{
-    double floor_to_ceiling_fraction = compute_fraction(4.3, 4, 6);
-    EXPECT_DOUBLE_EQ(floor_to_ceiling_fraction, 0.15);
-}
-
 TEST_F(Grid3DImplementationFixture, hypercube)
 {
     auto& hypercube = interpolator.get_hypercube();

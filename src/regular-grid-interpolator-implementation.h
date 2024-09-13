@@ -228,10 +228,4 @@ std::vector<GridAxis> construct_grid_axes(const std::vector<std::vector<double>>
 std::vector<GridPointDataSet>
 construct_grid_point_data_sets(const std::vector<std::vector<double>>& grid_point_data_sets);
 
-inline double compute_fraction(const double x, const double start, const double end)
-{
-    // how far along an edge is the target?
-    return (x - start) / (end - start);
-}
-
 } // namespace Btwxt
