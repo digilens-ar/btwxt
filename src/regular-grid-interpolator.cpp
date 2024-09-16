@@ -44,9 +44,9 @@ RegularGridInterpolator::RegularGridInterpolator(
         const bool isCubic = ax.get_interpolation_method() == InterpolationMethod::cubic;
         std::vector<std::vector<short>> r;
         for (const auto& x : hypercube) {
-            for (const auto item : (isCubic ?  std::initializer_list<int> {-1, 0, 1, 2} :  std::initializer_list<int> {0, 1})) {
+            for (const auto item : (isCubic ?  std::initializer_list<short> {-1, 0, 1, 2} :  std::initializer_list<short> {0, 1})) {
                 r.push_back(x);
-                r.back().push_back(static_cast<short>(item));
+                r.back().push_back(item);
             }
         }
         hypercube = std::move(r);
