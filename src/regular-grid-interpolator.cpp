@@ -53,6 +53,90 @@ RegularGridInterpolator::RegularGridInterpolator(
     }
 }
 
+namespace
+{
+    std::vector<std::array<double, 4>> calculate_interpolation_coefficients(
+        std::vector<double> const& floor_to_ceiling_fractions,
+        std::vector<size_t> const& floor_grid_point_coordinates,
+        std::vector<GridAxis> const& grid_axes)
+    {
+        static constexpr std::size_t floor = 0;
+        static constexpr std::size_t ceiling = 1;
+        std::vector<std::array<double, 4>> weighting_factors;
+        weighting_factors.reserve(grid_axes.size());
+        for (std::size_t axis_index = 0; axis_index < grid_axes.size(); axis_index++) {
+            double mu = floor_to_ceiling_fractions[axis_index];
+            std::array<double, 2> interpolation_coefficients;
+            std::array<double, 2> cubic_slope_coefficients;
+            if (grid_axes[axis_index].get_interpolation_method() == InterpolationMethod::cubic) {
+                interpolation_coefficients[floor] = 2 * mu * mu * mu - 3 * mu * mu + 1;
+                interpolation_coefficients[ceiling] = -2 * mu * mu * mu + 3 * mu * mu;
+                cubic_slope_coefficients[floor] =
+                    (mu * mu * mu - 2 * mu * mu + mu) *
+                    grid_axes[axis_index].get_cubic_spacing_ratios(floor)[floor_grid_point_coordinates[axis_index]];
+                cubic_slope_coefficients[ceiling] =
+                    (mu * mu * mu - mu * mu) *
+                    grid_axes[axis_index].get_cubic_spacing_ratios(ceiling)[floor_grid_point_coordinates[axis_index]];
+            }
+            else {
+                interpolation_coefficients[floor] = 1 - mu;
+                interpolation_coefficients[ceiling] = mu;
+                cubic_slope_coefficients[floor] = 0.0;
+                cubic_slope_coefficients[ceiling] = 0.0;
+            }
+            weighting_factors.emplace_back(std::array<double, 4> {
+                 -cubic_slope_coefficients[floor], // point below floor (-1)
+                interpolation_coefficients[floor] - cubic_slope_coefficients[ceiling], // floor (0)
+                interpolation_coefficients[ceiling] + cubic_slope_coefficients[floor], // ceiling (1)
+                cubic_slope_coefficients[ceiling] // point above ceiling (2)
+            });
+        }
+        return weighting_factors;
+    }
+
+    double get_grid_point_weighting_factor(const std::vector<short>& hypercube_indices, std::vector<std::array<double, 4>> const& weighting_factors)
+    {
+        assert(hypercube_indices.size() == weighting_factors.size());
+        double weighting_factor = 1.0;
+        for (std::size_t axis_index = 0; axis_index < weighting_factors.size(); axis_index++) {
+            weighting_factor *= weighting_factors[axis_index][hypercube_indices[axis_index] + 1];
+        }
+        return weighting_factor;
+    }
+
+    // for each axis, the fraction the target value
+    // is between its floor and ceiling axis values
+    std::vector<double> calculate_floor_to_ceiling_fractions(
+        std::vector<double> const& target, 
+        std::vector<size_t> const& floor_grid_point_coordinates, 
+        std::vector<GridAxis> const& grid_axes)
+    {
+        assert(target.size() == floor_grid_point_coordinates.size());
+        assert(target.size() == grid_axes.size());
+
+        auto compute_fraction = [](double x, double start, double end) -> double
+        {
+            // how far along an edge is the target?
+            return (x - start) / (end - start);
+        };
+
+        std::vector<double> out;
+        out.reserve(target.size());
+        for (std::size_t axis_index = 0; axis_index < grid_axes.size(); ++axis_index) {
+            auto& axis_values = grid_axes[axis_index].get_values();
+            if (axis_values.size() > 1) {
+                auto floor_index = floor_grid_point_coordinates[axis_index];
+                out.push_back(compute_fraction(
+                    target[axis_index], axis_values[floor_index], axis_values[floor_index + 1]));
+            }
+            else {
+                out.push_back(1);
+            }
+        }
+        return out;
+    }
+}
+
 std::vector<double> RegularGridInterpolator::solve(const std::vector<double>& target_in)
 {
     //set_target
@@ -73,8 +157,8 @@ std::vector<double> RegularGridInterpolator::solve(const std::vector<double>& ta
         }
     }
      
-    std::vector<double> floor_to_ceiling_fractions = calculate_floor_to_ceiling_fractions(target_in, floor_grid_point_coordinates);
-    auto weighting_factors = calculate_interpolation_coefficients(floor_to_ceiling_fractions, floor_grid_point_coordinates);
+    std::vector<double> floor_to_ceiling_fractions = calculate_floor_to_ceiling_fractions(target_in, floor_grid_point_coordinates, grid_axes_);
+    auto weighting_factors = calculate_interpolation_coefficients(floor_to_ceiling_fractions, floor_grid_point_coordinates, grid_axes_);
     auto hypercube_grid_point_data = set_hypercube_grid_point_data(floor_grid_point_coordinates);
     // get results
     std::vector<double> results(grid_point_data_sets_.size(), 0);
@@ -104,26 +188,19 @@ std::vector<double> RegularGridInterpolator::get_grid_point_data_relative(
     return get_grid_point_data(get_grid_point_index_relative(coords, translation));
 }
 
-std::size_t RegularGridInterpolator::get_grid_point_index(
-    const std::vector<std::size_t>& coords) const
+namespace
 {
-    std::size_t grid_point_index = 0;
-    for (std::size_t axis_index = 0; axis_index < grid_axes_.size(); ++axis_index) {
-        grid_point_index += coords[axis_index] * grid_axis_step_size_[axis_index];
+    std::size_t get_grid_point_index(
+        std::vector<std::size_t> const& coords, std::vector<size_t> const& grid_axis_step_size)
+    {
+        assert(coords.size() == grid_axis_step_size.size());
+        std::size_t grid_point_index = 0;
+        for (std::size_t axis_index = 0; axis_index < coords.size(); ++axis_index) {
+            grid_point_index += coords[axis_index] * grid_axis_step_size[axis_index];
+        }
+        return grid_point_index;
     }
-    return grid_point_index;
 }
-
-double RegularGridInterpolator::get_grid_point_weighting_factor(
-    const std::vector<short>& hypercube_indices, std::vector<std::array<double, 4>> const& weighting_factors) const
-{
-    double weighting_factor = 1.0;
-    for (std::size_t axis_index = 0; axis_index < grid_axes_.size(); axis_index++) {
-        weighting_factor *= weighting_factors[axis_index][hypercube_indices[axis_index] + 1];
-    }
-    return weighting_factor;
-}
-
 // Internal calculation methods
 
 std::size_t RegularGridInterpolator::get_grid_point_index_relative(
@@ -143,74 +220,15 @@ std::size_t RegularGridInterpolator::get_grid_point_index_relative(
             temporary_coordinates[axis_index] = new_coord;
         }
     }
-    return get_grid_point_index(temporary_coordinates);
+    return get_grid_point_index(temporary_coordinates, grid_axis_step_size_);
 }
 
-std::vector<double> RegularGridInterpolator::calculate_floor_to_ceiling_fractions(std::vector<double> const& target, std::vector<size_t> const& floor_grid_point_coordinates) const
-{
-    auto compute_fraction = [](double x, double start, double end) -> double
-    {
-        // how far along an edge is the target?
-        return (x - start) / (end - start);
-    };
-
-    std::vector<double> out;
-    out.reserve(grid_axes_.size());
-    for (std::size_t axis_index = 0; axis_index < grid_axes_.size(); ++axis_index) {
-        auto& axis_values = grid_axes_[axis_index].get_values();
-        if (axis_values.size() > 1) {
-            auto floor_index = floor_grid_point_coordinates[axis_index];
-            out.push_back(compute_fraction(
-                target[axis_index], axis_values[floor_index], axis_values[floor_index + 1]));
-        }
-        else {
-            out.push_back(1);
-        }
-    }
-    return out;
-}
-
-std::vector<std::array<double, 4>> RegularGridInterpolator::calculate_interpolation_coefficients(std::vector<double> const& floor_to_ceiling_fractions, std::vector<size_t> const& floor_grid_point_coordinates) const
-{
-    static constexpr std::size_t floor = 0;
-    static constexpr std::size_t ceiling = 1;
-    std::vector<std::array<double, 4>> weighting_factors;
-    weighting_factors.reserve(grid_axes_.size());
-    for (std::size_t axis_index = 0; axis_index < grid_axes_.size(); axis_index++) {
-        double mu = floor_to_ceiling_fractions[axis_index];
-        std::array<double, 2> interpolation_coefficients;
-        std::array<double, 2> cubic_slope_coefficients;
-        if (grid_axes_[axis_index].get_interpolation_method() == InterpolationMethod::cubic) {
-            interpolation_coefficients[floor] = 2 * mu * mu * mu - 3 * mu * mu + 1;
-            interpolation_coefficients[ceiling] = -2 * mu * mu * mu + 3 * mu * mu;
-            cubic_slope_coefficients[floor] =
-                (mu * mu * mu - 2 * mu * mu + mu) *
-                grid_axes_[axis_index].get_cubic_spacing_ratios(floor)[floor_grid_point_coordinates[axis_index]];
-            cubic_slope_coefficients[ceiling] =
-                (mu * mu * mu - mu * mu) *
-                grid_axes_[axis_index].get_cubic_spacing_ratios(ceiling)[floor_grid_point_coordinates[axis_index]];
-        }
-        else {
-            interpolation_coefficients[floor] = 1 - mu;
-            interpolation_coefficients[ceiling] = mu;
-            cubic_slope_coefficients[floor] = 0.0;
-            cubic_slope_coefficients[ceiling] = 0.0;
-        }
-        weighting_factors.emplace_back(std::array<double, 4> {
-             -cubic_slope_coefficients[floor], // point below floor (-1)
-            interpolation_coefficients[floor] - cubic_slope_coefficients[ceiling], // floor (0)
-            interpolation_coefficients[ceiling] + cubic_slope_coefficients[floor], // ceiling (1)
-            cubic_slope_coefficients[ceiling] // point above ceiling (2)
-        });
-    }
-    return weighting_factors;
-}
 
 std::vector<std::vector<double>>
 RegularGridInterpolator::set_hypercube_grid_point_data(
     std::vector<size_t> const& floor_grid_point_coordinates)
 {
-    const size_t floor_grid_point_index = get_grid_point_index(floor_grid_point_coordinates); // Index of the floor_grid_point_coordinates (used for hypercube caching)
+    const size_t floor_grid_point_index = get_grid_point_index(floor_grid_point_coordinates, grid_axis_step_size_); // Index of the floor_grid_point_coordinates (used for hypercube caching)
     if (hypercube_cache.count(floor_grid_point_index)) {
         return hypercube_cache.at(floor_grid_point_index);
     }

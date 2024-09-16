@@ -63,25 +63,13 @@ class RegularGridInterpolator {
     // calculated data
     std::vector<std::vector<short>> hypercube; // A minimal set of indices near the target needed to
                                                // perform interpolation calculations.
-    std::map<size_t, std::vector<std::vector<double>>> hypercube_cache;
+    std::unordered_map<size_t, std::vector<std::vector<double>>> hypercube_cache;
 
     // Internal methods
-    [[nodiscard]] std::size_t
-    get_grid_point_index(const std::vector<std::size_t>& coordinates) const;
-
     std::vector<double> get_grid_point_data_relative(const std::vector<std::size_t>& coordinates,
                                                      const std::vector<short>& translation) const;
-
-    double get_grid_point_weighting_factor(const std::vector<short>& hypercube_indices, std::vector<std::array<double, 4>> const& weighting_factors) const;
-
     std::size_t get_grid_point_index_relative(const std::vector<std::size_t>& coordinates,
                                               const std::vector<short>& translation) const;
-
-    // for each axis, the fraction the target value
-    // is between its floor and ceiling axis values
-    std::vector<double> calculate_floor_to_ceiling_fractions(std::vector<double> const& target, std::vector<size_t> const& floor_grid_point_coordinates) const;
-
-    std::vector<std::array<double, 4>> calculate_interpolation_coefficients(std::vector<double> const& floor_to_ceiling_fractions, std::vector<size_t> const& floor_grid_point_coordinates) const;
 
     std::vector<std::vector<double>> set_hypercube_grid_point_data(
         std::vector<size_t> const& floor_grid_point_coordinates);
