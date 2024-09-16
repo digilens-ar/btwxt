@@ -61,8 +61,6 @@ class RegularGridInterpolator {
                                                     // indices (size = number_of_grid_axes)
 
     // calculated data
-
-    std::vector<InterpolationMethod> methods;
     std::vector<std::vector<short>> hypercube; // A minimal set of indices near the target needed to
                                                // perform interpolation calculations.
     std::map<std::pair<std::size_t, std::size_t>, std::vector<std::vector<double>>> hypercube_cache;
@@ -87,12 +85,8 @@ class RegularGridInterpolator {
 
     std::vector<std::array<double, 4>> calculate_interpolation_coefficients(std::vector<double> const& floor_to_ceiling_fractions, std::vector<size_t> const& floor_grid_point_coordinates) const;
 
-    void set_hypercube(std::vector<InterpolationMethod> const& methods);
-
     std::vector<std::vector<double>> set_hypercube_grid_point_data(
         std::vector<size_t> const& floor_grid_point_coordinates);
-
-    [[nodiscard]] std::vector<InterpolationMethod> get_interpolation_methods() const;
 
     std::vector<double> get_grid_point_data(std::size_t grid_point_index) const;
 };

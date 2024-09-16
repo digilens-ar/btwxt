@@ -19,7 +19,6 @@ RegularGridInterpolator::RegularGridInterpolator(
     grid_axes_(grid_axes)
     , grid_point_data_sets_(grid_point_data_sets_)
     , grid_axis_step_size_(grid_axes.size())
-    , methods(grid_axes.size())
 {
     // set axis sizes and calculate number of grid points
     number_of_grid_points_ = 1;
@@ -40,9 +39,28 @@ RegularGridInterpolator::RegularGridInterpolator(
         }
     }
 
-    methods = get_interpolation_methods();
-    set_hypercube(methods);
-
+    hypercube = {{}};
+    hypercube_size_hash = 0;
+    std::size_t digit = 1;
+    for (auto const& ax : grid_axes_) {
+        std::vector<int> option;
+        if (ax.get_interpolation_method() == InterpolationMethod::cubic) {
+            option = {-1, 0, 1, 2};
+        }
+        else {
+           option = {0, 1}; 
+        }
+        hypercube_size_hash += option.size() * digit;
+        digit *= 10;
+        std::vector<std::vector<short>> r;
+        for (const auto& x : hypercube) {
+            for (const auto item : option) {
+                r.push_back(x);
+                r.back().push_back(static_cast<short>(item));
+            }
+        }
+        hypercube = std::move(r);
+    }
 }
 
 std::vector<double> RegularGridInterpolator::solve(const std::vector<double>& target_in)
@@ -94,12 +112,6 @@ std::vector<double> RegularGridInterpolator::get_grid_point_data_relative(
     const std::vector<std::size_t>& coords, const std::vector<short>& translation) const
 {
     return get_grid_point_data(get_grid_point_index_relative(coords, translation));
-}
-
-// Internal getter methods
-std::vector<InterpolationMethod> RegularGridInterpolator::get_interpolation_methods() const
-{
-    return grid_axes_ | std::views::transform([](GridAxis const& ax) { return ax.get_interpolation_method(); }) | std::ranges::to<std::vector<InterpolationMethod>>();
 }
 
 std::size_t RegularGridInterpolator::get_grid_point_index(
@@ -168,33 +180,6 @@ std::vector<double> RegularGridInterpolator::calculate_floor_to_ceiling_fraction
     return out;
 }
 
-void RegularGridInterpolator::set_hypercube(std::vector<InterpolationMethod> const& methods_in)
-{
-    assert(methods_in.size() == grid_axes_.size());
-    std::vector<std::vector<int>> options(grid_axes_.size(), {0, 1});
-
-    hypercube_size_hash = 0;
-    std::size_t digit = 1;
-    for (std::size_t axis_index = 0; axis_index < grid_axes_.size(); axis_index++) {
-        if (methods_in[axis_index] == InterpolationMethod::cubic) {
-            options[axis_index] = {-1, 0, 1, 2};
-        }
-        hypercube_size_hash += options[axis_index].size() * digit;
-        digit *= 10;
-    }
-    hypercube = {{}};
-    for (const auto& list : options) {
-        std::vector<std::vector<short>> r;
-        for (const auto& x : hypercube) {
-            for (const auto item : list) {
-                r.push_back(x);
-                r.back().push_back(static_cast<short>(item));
-            }
-        }
-        hypercube = std::move(r);
-    }
-}
-
 std::vector<std::array<double, 4>> RegularGridInterpolator::calculate_interpolation_coefficients(std::vector<double> const& floor_to_ceiling_fractions, std::vector<size_t> const& floor_grid_point_coordinates) const
 {
     static constexpr std::size_t floor = 0;
@@ -205,7 +190,7 @@ std::vector<std::array<double, 4>> RegularGridInterpolator::calculate_interpolat
         double mu = floor_to_ceiling_fractions[axis_index];
         std::array<double, 2> interpolation_coefficients;
         std::array<double, 2> cubic_slope_coefficients;
-        if (methods[axis_index] == InterpolationMethod::cubic) {
+        if (grid_axes_[axis_index].get_interpolation_method() == InterpolationMethod::cubic) {
             interpolation_coefficients[floor] = 2 * mu * mu * mu - 3 * mu * mu + 1;
             interpolation_coefficients[ceiling] = -2 * mu * mu * mu + 3 * mu * mu;
             cubic_slope_coefficients[floor] =
