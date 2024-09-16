@@ -63,9 +63,7 @@ class RegularGridInterpolator {
     // calculated data
     std::vector<std::vector<short>> hypercube; // A minimal set of indices near the target needed to
                                                // perform interpolation calculations.
-    std::map<std::pair<std::size_t, std::size_t>, std::vector<std::vector<double>>> hypercube_cache;
-
-    std::size_t hypercube_size_hash {0u};
+    std::map<size_t, std::vector<std::vector<double>>> hypercube_cache;
 
     // Internal methods
     [[nodiscard]] std::size_t

@@ -40,21 +40,11 @@ RegularGridInterpolator::RegularGridInterpolator(
     }
 
     hypercube = {{}};
-    hypercube_size_hash = 0;
-    std::size_t digit = 1;
     for (auto const& ax : grid_axes_) {
-        std::vector<int> option;
-        if (ax.get_interpolation_method() == InterpolationMethod::cubic) {
-            option = {-1, 0, 1, 2};
-        }
-        else {
-           option = {0, 1}; 
-        }
-        hypercube_size_hash += option.size() * digit;
-        digit *= 10;
+        const bool isCubic = ax.get_interpolation_method() == InterpolationMethod::cubic;
         std::vector<std::vector<short>> r;
         for (const auto& x : hypercube) {
-            for (const auto item : option) {
+            for (const auto item : (isCubic ?  std::initializer_list<int> {-1, 0, 1, 2} :  std::initializer_list<int> {0, 1})) {
                 r.push_back(x);
                 r.back().push_back(static_cast<short>(item));
             }
@@ -221,8 +211,8 @@ RegularGridInterpolator::set_hypercube_grid_point_data(
     std::vector<size_t> const& floor_grid_point_coordinates)
 {
     const size_t floor_grid_point_index = get_grid_point_index(floor_grid_point_coordinates); // Index of the floor_grid_point_coordinates (used for hypercube caching)
-    if (hypercube_cache.count({floor_grid_point_index, hypercube_size_hash})) {
-        return hypercube_cache.at({floor_grid_point_index, hypercube_size_hash});
+    if (hypercube_cache.count(floor_grid_point_index)) {
+        return hypercube_cache.at(floor_grid_point_index);
     }
     std::size_t hypercube_index = 0;
     std::vector<std::vector<double>> hypercube_grid_point_data(hypercube.size(), std::vector<double>(grid_point_data_sets_.size()));
@@ -231,7 +221,7 @@ RegularGridInterpolator::set_hypercube_grid_point_data(
             get_grid_point_data_relative(floor_grid_point_coordinates, v);
         ++hypercube_index;
     }
-    hypercube_cache[{floor_grid_point_index, hypercube_size_hash}] = hypercube_grid_point_data;
+    hypercube_cache[floor_grid_point_index] = hypercube_grid_point_data;
     return hypercube_grid_point_data;
 }
 } // namespace Btwxt
