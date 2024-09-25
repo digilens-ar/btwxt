@@ -15,6 +15,8 @@ target_sources(btwxt PUBLIC
     FILES "${PROJECT_SOURCE_DIR}/include/btwxt/btwxt.h" "${PROJECT_SOURCE_DIR}/include/btwxt/grid-axis.h"  "${PROJECT_SOURCE_DIR}/include/btwxt/regular-grid-interpolator.h"
 )
 
+add_library(btwxt::btwxt ALIAS btwxt)  # Make this library accessible through the same name if you import or if you add subdirectory
+
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 
