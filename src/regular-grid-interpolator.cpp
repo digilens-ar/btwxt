@@ -14,7 +14,7 @@ namespace Btwxt {
 
 RegularGridInterpolator::RegularGridInterpolator(
     const std::vector<GridAxis>& grid_axes,
-    const std::vector<GridPointDataSet>& grid_point_data_sets_,
+    const std::vector<std::vector<double>>& grid_point_data_sets_,
     InterpolationMethod intMethod)
     :
     grid_axes_(grid_axes)

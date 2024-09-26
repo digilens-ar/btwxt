@@ -9,13 +9,12 @@
 
 namespace Btwxt {
 
-using GridPointDataSet = std::vector<double>; // Data corresponding to all points within a collection of grid axes. Length of data should equal the total number of permutations of grid axes points.
 
 class RegularGridInterpolator {
   public:
 
     RegularGridInterpolator(const std::vector<GridAxis>& grid_axes,
-                                          const std::vector<GridPointDataSet>& grid_point_data_sets, InterpolationMethod intMethod=InterpolationMethod::linear);
+                                          const std::vector<std::vector<double>>& grid_point_data_sets, InterpolationMethod intMethod=InterpolationMethod::linear);
 
     [[nodiscard]] std::vector<double> solve(std::vector<double> const& target);
 
@@ -36,7 +35,7 @@ class RegularGridInterpolator {
         return grid_axes_[axis_index];
     };
 
-    [[nodiscard]] const GridPointDataSet&
+    [[nodiscard]] const std::vector<double>&
     get_grid_point_data_set(std::size_t data_set_index) const
     {
         return grid_point_data_sets_[data_set_index];
@@ -50,7 +49,7 @@ class RegularGridInterpolator {
   private:
     // Structured data
     std::vector<GridAxis> grid_axes_;
-    std::vector<GridPointDataSet> grid_point_data_sets_;
+    std::vector<std::vector<double>> grid_point_data_sets_;
     std::size_t number_of_grid_points_ {0u};
     std::vector<std::size_t> grid_axis_step_size_;   // Used to translate grid point coordinates to
                                                     // indices (size = number_of_grid_axes)
