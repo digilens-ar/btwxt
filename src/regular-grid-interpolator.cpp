@@ -14,12 +14,37 @@ namespace Btwxt {
 
 RegularGridInterpolator::RegularGridInterpolator(
     const std::vector<GridAxis>& grid_axes,
-    const std::vector<GridPointDataSet>& grid_point_data_sets_)
+    const std::vector<GridPointDataSet>& grid_point_data_sets_,
+    InterpolationMethod intMethod)
     :
     grid_axes_(grid_axes)
     , grid_point_data_sets_(grid_point_data_sets_)
-    , grid_axis_step_size_(grid_axes.size())
+    , grid_axis_step_size_(grid_axes.size()),
+    interpolation_method_(intMethod)
 {
+    if (interpolation_method_ == InterpolationMethod::cubic) {
+        for (auto const& ax : grid_axes_)
+        {
+            auto& cubic_spacing_ratios = cubic_spacing_ratios_.emplace_back(std::array<std::vector<double>, 2>());
+            auto const& values = ax.get_values();
+            if (values.size() == 1)
+                continue; // A cubic interpolation method is not valid for grid axis with only one value. "
+            std::fill(cubic_spacing_ratios.begin(), cubic_spacing_ratios.end(), std::vector<double>(values.size() - 1, 1.0));
+            //calculate_cubic_spacing_ratios
+            static constexpr std::size_t floor = 0;
+            static constexpr std::size_t ceiling = 1;
+            for (std::size_t i = 0; i < values.size() - 1; i++) {
+                double center_spacing = values[i + 1] - values[i];
+                if (i != 0) {
+                    cubic_spacing_ratios[floor][i] = center_spacing / (values[i + 1] - values[i - 1]);
+                }
+                if (i + 2 != values.size()) {
+                    cubic_spacing_ratios[ceiling][i] = center_spacing / (values[i + 2] - values[i]);
+                }
+            }
+        }
+    }
+
     // set axis sizes and calculate number of grid points
     number_of_grid_points_ = 1;
     for (std::size_t axis_index = grid_axes.size(); axis_index-- > 0;) {
@@ -41,7 +66,9 @@ RegularGridInterpolator::RegularGridInterpolator(
 
     hypercube = {{}};
     for (auto const& ax : grid_axes_) {
-        const bool isCubic = ax.get_interpolation_method() == InterpolationMethod::cubic;
+        bool isCubic = interpolation_method_ == InterpolationMethod::cubic;
+        if (ax.get_values().size() == 1)
+            isCubic = false; // an axis with size 1 must be treated with linear interpolation
         std::vector<std::vector<short>> r;
         for (const auto& x : hypercube) {
             for (const auto item : (isCubic ?  std::initializer_list<short> {-1, 0, 1, 2} :  std::initializer_list<short> {0, 1})) {
@@ -58,7 +85,9 @@ namespace
     std::vector<std::array<double, 4>> calculate_interpolation_coefficients(
         std::vector<double> const& floor_to_ceiling_fractions,
         std::vector<size_t> const& floor_grid_point_coordinates,
-        std::vector<GridAxis> const& grid_axes)
+        std::vector<GridAxis> const& grid_axes,
+        std::vector<std::array<std::vector<double>, 2>> const& cubicSpacingRatios,
+        bool cubicInterpolation)
     {
         static constexpr std::size_t floor = 0;
         static constexpr std::size_t ceiling = 1;
@@ -68,15 +97,14 @@ namespace
             double mu = floor_to_ceiling_fractions[axis_index];
             std::array<double, 2> interpolation_coefficients;
             std::array<double, 2> cubic_slope_coefficients;
-            if (grid_axes[axis_index].get_interpolation_method() == InterpolationMethod::cubic) {
+            const bool isCubic = cubicInterpolation && grid_axes.at(axis_index).get_values().size() > 1;
+            if (isCubic) {
                 interpolation_coefficients[floor] = 2 * mu * mu * mu - 3 * mu * mu + 1;
                 interpolation_coefficients[ceiling] = -2 * mu * mu * mu + 3 * mu * mu;
                 cubic_slope_coefficients[floor] =
-                    (mu * mu * mu - 2 * mu * mu + mu) *
-                    grid_axes[axis_index].get_cubic_spacing_ratios(floor)[floor_grid_point_coordinates[axis_index]];
+                    (mu * mu * mu - 2 * mu * mu + mu) * cubicSpacingRatios.at(axis_index).at(floor).at(floor_grid_point_coordinates.at(axis_index));
                 cubic_slope_coefficients[ceiling] =
-                    (mu * mu * mu - mu * mu) *
-                    grid_axes[axis_index].get_cubic_spacing_ratios(ceiling)[floor_grid_point_coordinates[axis_index]];
+                    (mu * mu * mu - mu * mu) * cubicSpacingRatios.at(axis_index).at(ceiling).at(floor_grid_point_coordinates.at(axis_index));
             }
             else {
                 interpolation_coefficients[floor] = 1 - mu;
@@ -158,7 +186,7 @@ std::vector<double> RegularGridInterpolator::solve(const std::vector<double>& ta
     }
      
     std::vector<double> floor_to_ceiling_fractions = calculate_floor_to_ceiling_fractions(target_in, floor_grid_point_coordinates, grid_axes_);
-    auto weighting_factors = calculate_interpolation_coefficients(floor_to_ceiling_fractions, floor_grid_point_coordinates, grid_axes_);
+    auto weighting_factors = calculate_interpolation_coefficients(floor_to_ceiling_fractions, floor_grid_point_coordinates, grid_axes_, cubic_spacing_ratios_, interpolation_method_ == InterpolationMethod::cubic);
     auto hypercube_grid_point_data = set_hypercube_grid_point_data(floor_grid_point_coordinates);
     // get results
     std::vector<double> results(grid_point_data_sets_.size(), 0);

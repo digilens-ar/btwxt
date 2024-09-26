@@ -17,8 +17,7 @@ inline std::vector<GridAxis> construct_grid_axes(const std::vector<std::vector<d
     std::vector<GridAxis> grid_axes;
     grid_axes.reserve(grid_axis_vectors.size());
     for (const auto& axis : grid_axis_vectors) {
-        grid_axes.emplace_back(axis,
-                               InterpolationMethod::linear);
+        grid_axes.emplace_back(axis);
     }
     return grid_axes;
 }
@@ -39,8 +38,8 @@ class GridImplementationFixture : public testing::Test {
     std::vector<double> target;
     RegularGridInterpolator interpolator;
 
-    GridImplementationFixture(std::vector<GridAxis> const& gridd, std::vector<std::vector<double>> const& datasetss):
-        interpolator(gridd, construct_grid_point_data_sets(datasetss))
+    GridImplementationFixture(std::vector<GridAxis> const& gridd, std::vector<std::vector<double>> const& datasetss, InterpolationMethod intMethod):
+        interpolator(gridd, construct_grid_point_data_sets(datasetss), intMethod)
     {}
 
 };
@@ -48,7 +47,7 @@ class GridImplementationFixture : public testing::Test {
 class Grid2DImplementationFixture : public GridImplementationFixture {
   protected:
     Grid2DImplementationFixture():
-        GridImplementationFixture({GridAxis({0, 10, 15}, InterpolationMethod::linear), GridAxis({4, 6})},  {{6,
+        GridImplementationFixture({GridAxis({0, 10, 15}), GridAxis({4, 6})},  {{6,
                       3,   // 0
                       2,
                       8,   // 10
@@ -59,7 +58,8 @@ class Grid2DImplementationFixture : public GridImplementationFixture {
                       4,
                       16,  // 10
                       8,
-                      4}}) // 15
+                      4}}, // 15
+            InterpolationMethod::linear)
     {
         target = {12, 5};
     }
@@ -68,7 +68,7 @@ class Grid2DImplementationFixture : public GridImplementationFixture {
 class CubicImplementationFixture : public GridImplementationFixture {
   protected:
     CubicImplementationFixture():
-        GridImplementationFixture({GridAxis({6, 10, 15, 20}, InterpolationMethod::cubic), GridAxis({2, 4, 6, 8})},
+        GridImplementationFixture({GridAxis({6, 10, 15, 20}), GridAxis({2, 4, 6, 8})},
             {{4,
               3,
               1.5,
@@ -101,7 +101,8 @@ class CubicImplementationFixture : public GridImplementationFixture {
               25,
               20,
               10,
-              5}}) // 20
+              5}}, // 20
+            InterpolationMethod::cubic)
     {
         target = {12, 4.5};
     }
@@ -111,8 +112,8 @@ class CubicImplementationFixture : public GridImplementationFixture {
 class Grid3DImplementationFixture : public GridImplementationFixture {
   protected:
     Grid3DImplementationFixture():
-        GridImplementationFixture({GridAxis({-15, 0.2, 105}), GridAxis({0, 10, 15}, InterpolationMethod::cubic), GridAxis({4, 6})},
-           {{6, 3, 2, 8, 4, 2, 3, 6, 13, 2, 0, 15, 3, 6, 13, 2, 0, 15}})
+        GridImplementationFixture({GridAxis({-15, 0.2, 105}), GridAxis({0, 10, 15}), GridAxis({4, 6})},
+           {{6, 3, 2, 8, 4, 2, 3, 6, 13, 2, 0, 15, 3, 6, 13, 2, 0, 15}}, InterpolationMethod::linear)
     {
         target = {26.9, 12, 5};
     }

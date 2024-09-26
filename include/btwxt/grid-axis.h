@@ -16,24 +16,11 @@ enum class InterpolationMethod { linear, cubic };
 class GridAxis {
     // A single input dimension of the grid
   public:
-
-    explicit GridAxis(
-        std::vector<double> values,
-        InterpolationMethod interpolation_method = InterpolationMethod::linear);
+    explicit GridAxis(std::vector<double> values);
     // Getters
     [[nodiscard]] const std::vector<double>& get_values() const { return values; }
-    [[nodiscard]] InterpolationMethod get_interpolation_method() const{ return interpolation_method; }
-
-    [[nodiscard]] const std::vector<double>& get_cubic_spacing_ratios(std::size_t floor_or_ceiling) const;
-
   private:
     std::vector<double> values;
-    InterpolationMethod interpolation_method = InterpolationMethod::linear;
-    std::array<std::vector<double>, 2>
-        cubic_spacing_ratios; // Used for cubic interpolation. Outer vector is size 2: 0: spacing
-                              // for the floor, 1: spacing for the ceiling. Inner vector is length
-                              // of axis values, but the floor vector doesn't use the first entry
-                              // and the ceiling doesn't use the last entry.
 };
 
 

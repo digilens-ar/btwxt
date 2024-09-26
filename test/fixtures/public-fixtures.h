@@ -32,13 +32,14 @@ class GridFixture : public testing::Test {
     std::vector<std::vector<double>> data_sets;
     std::vector<double> target;
     std::optional<RegularGridInterpolator> interpolator;
+    InterpolationMethod intMethod = InterpolationMethod::linear;
 
     GridFixture() = default;
 
     virtual void setup()
     {
         interpolator = RegularGridInterpolator(
-            grid, data_sets);
+            grid, data_sets, intMethod);
     }
 };
 
@@ -69,7 +70,7 @@ class Grid2DFixtureCubic : public GridFixture {
   protected:
     Grid2DFixtureCubic()
     {
-        grid = {GridAxis({0, 10, 15}, InterpolationMethod::cubic), GridAxis({4, 6}, InterpolationMethod::cubic)};
+        grid = {GridAxis({0, 10, 15}), GridAxis({4, 6})};
         //         4  6
         data_sets = {{6,
                       3,   // 0
@@ -84,6 +85,7 @@ class Grid2DFixtureCubic : public GridFixture {
                       8,
                       4}}; // 15
         target = {12, 5};
+        intMethod = InterpolationMethod::cubic;
         setup();
     }
 };

@@ -51,9 +51,10 @@ TEST_F(FunctionFixture, scipy_3d_grid)
 TEST_F(GridFixture, four_point_1d_cubic_interpolate)
 {
 
-    grid = {GridAxis({0, 2, 5, 10}, InterpolationMethod::cubic)};
+    grid = {GridAxis({0, 2, 5, 10})};
     data_sets = {{6, 5, 4, 3}};
     target = {2.5};
+    intMethod = InterpolationMethod::cubic;
     setup();
 
     const double expected_value = 4.804398;
@@ -72,9 +73,10 @@ TEST_F(GridFixture, empty_grid_throw_test)
 
 TEST_F(GridFixture, two_point_cubic_1d_interpolate)
 {
-    grid = {GridAxis({0, 10}, InterpolationMethod::cubic)};
+    grid = {GridAxis({0, 10})};
     data_sets = {{6, 3}};
     target = {2.5};
+    intMethod = InterpolationMethod::cubic;
     setup();
     double result = interpolator->solve(target)[0];
 

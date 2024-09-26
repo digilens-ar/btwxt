@@ -40,15 +40,4 @@ TEST(GridAxis, sorting)
     EXPECT_NO_THROW(GridAxis my_grid_axis = GridAxis(grid_vector););
 }
 
-TEST(GridAxis, calculate_cubic_spacing_ratios)
-{
-    static constexpr std::size_t floor = 0;
-    static constexpr std::size_t ceiling = 1;
-
-    GridAxis grid_axis({6., 10., 15., 20., 22.}, InterpolationMethod::cubic);
-    EXPECT_THAT(grid_axis.get_cubic_spacing_ratios(floor),
-                testing::ElementsAre(1, 5.0 / 9, 0.5, 2.0 / 7));
-    EXPECT_THAT(grid_axis.get_cubic_spacing_ratios(ceiling),
-                testing::ElementsAre(4.0 / 9, 0.5, 5.0 / 7, 1));
-}
 } // namespace Btwxt

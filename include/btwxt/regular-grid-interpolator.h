@@ -4,12 +4,7 @@
 #pragma once
 
 // Standard
-#include <memory>
 #include <vector>
-
-// btwxt
-#include <map>
-
 #include "grid-axis.h"
 
 namespace Btwxt {
@@ -20,7 +15,7 @@ class RegularGridInterpolator {
   public:
 
     RegularGridInterpolator(const std::vector<GridAxis>& grid_axes,
-                                          const std::vector<GridPointDataSet>& grid_point_data_sets);
+                                          const std::vector<GridPointDataSet>& grid_point_data_sets, InterpolationMethod intMethod=InterpolationMethod::linear);
 
     [[nodiscard]] std::vector<double> solve(std::vector<double> const& target);
 
@@ -59,6 +54,13 @@ class RegularGridInterpolator {
     std::size_t number_of_grid_points_ {0u};
     std::vector<std::size_t> grid_axis_step_size_;   // Used to translate grid point coordinates to
                                                     // indices (size = number_of_grid_axes)
+
+    InterpolationMethod interpolation_method_;
+    std::vector<std::array<std::vector<double>, 2>>
+        cubic_spacing_ratios_; // Used for cubic interpolation. Outer vector is size 2: 0: spacing
+                              // for the floor, 1: spacing for the ceiling. Inner vector is length
+                              // of axis values, but the floor vector doesn't use the first entry
+                              // and the ceiling doesn't use the last entry.
 
     // calculated data
     std::vector<std::vector<short>> hypercube; // A minimal set of indices near the target needed to
