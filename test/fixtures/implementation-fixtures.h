@@ -22,9 +22,9 @@ inline std::vector<GridAxis> construct_grid_axes(const std::vector<std::vector<d
     return grid_axes;
 }
 
-inline std::vector<GridPointDataSet> construct_grid_point_data_sets(const std::vector<std::vector<double>>& grid_point_data_vectors)
+inline std::vector<std::vector<double>> construct_grid_point_data_sets(const std::vector<std::vector<double>>& grid_point_data_vectors)
 {
-    std::vector<GridPointDataSet> grid_point_data_sets;
+    std::vector<std::vector<double>> grid_point_data_sets;
     grid_point_data_sets.reserve(grid_point_data_vectors.size());
     for (const auto& grid_point_data_set : grid_point_data_vectors) {
         grid_point_data_sets.emplace_back(

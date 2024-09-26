@@ -191,7 +191,7 @@ TEST_F(Function4DFixture, multi_timer)
 
 TEST(GridPointDataSet, wrong_size)
 {
-    EXPECT_THROW(RegularGridInterpolator({GridAxis({1.})}, {GridPointDataSet({1., 1.})}),
+    EXPECT_THROW(RegularGridInterpolator({GridAxis({1.})}, {std::vector<double>({1., 1.})}),
                      std::runtime_error);
 }
 
