@@ -35,21 +35,11 @@ class RegularGridInterpolator {
         return grid_axes_[axis_index];
     };
 
-    [[nodiscard]] const std::vector<double>&
-    get_grid_point_data_set(std::size_t data_set_index) const
-    {
-        return grid_point_data_sets_[data_set_index];
-    };
-
-    [[nodiscard]] std::size_t get_number_of_grid_point_data_sets() const
-    {
-        return grid_point_data_sets_.size();
-    };
-
   private:
     // Structured data
     std::vector<GridAxis> grid_axes_;
-    std::vector<std::vector<double>> grid_point_data_sets_;
+    std::vector<double> grid_point_data_;
+    size_t numDataSets_;
     std::size_t number_of_grid_points_ {0u};
     std::vector<std::size_t> grid_axis_step_size_;   // Used to translate grid point coordinates to
                                                     // indices (size = number_of_grid_axes)
