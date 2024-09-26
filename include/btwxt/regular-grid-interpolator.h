@@ -68,8 +68,6 @@ class RegularGridInterpolator {
     std::unordered_map<size_t, std::vector<std::vector<double>>> hypercube_cache;
 
     // Internal methods
-    std::vector<double> get_grid_point_data_relative(const std::vector<std::size_t>& coordinates,
-                                                     const std::vector<short>& translation) const;
     std::size_t get_grid_point_index_relative(const std::vector<std::size_t>& coordinates,
                                               const std::vector<short>& translation) const;
 

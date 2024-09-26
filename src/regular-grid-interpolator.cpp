@@ -210,12 +210,6 @@ std::vector<double> RegularGridInterpolator::get_grid_point_data(std::size_t gri
     return temporary_grid_point_data;
 }
 
-std::vector<double> RegularGridInterpolator::get_grid_point_data_relative(
-    const std::vector<std::size_t>& coords, const std::vector<short>& translation) const
-{
-    return get_grid_point_data(get_grid_point_index_relative(coords, translation));
-}
-
 namespace
 {
     std::size_t get_grid_point_index(
@@ -264,7 +258,7 @@ RegularGridInterpolator::set_hypercube_grid_point_data(
     std::vector<std::vector<double>> hypercube_grid_point_data(hypercube.size(), std::vector<double>(grid_point_data_sets_.size()));
     for (const auto& v : hypercube) {
         hypercube_grid_point_data[hypercube_index] =
-            get_grid_point_data_relative(floor_grid_point_coordinates, v);
+            get_grid_point_data(get_grid_point_index_relative(floor_grid_point_coordinates, v));
         ++hypercube_index;
     }
     hypercube_cache[floor_grid_point_index] = hypercube_grid_point_data;
