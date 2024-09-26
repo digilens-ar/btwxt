@@ -210,10 +210,9 @@ std::vector<double> RegularGridInterpolator::solve(const std::vector<double>& ta
     std::vector<double> results(numDataSets_, 0);
     for (std::size_t hypercube_index = 0; hypercube_index < hypercube.size(); ++hypercube_index) {
         const double hypercube_weight = get_grid_point_weighting_factor(hypercube[hypercube_index], weighting_factors);
-        for (std::size_t data_set_index = 0; data_set_index < numDataSets_;
-             ++data_set_index) {
-            results[data_set_index] += hypercube_grid_point_data[hypercube_index][data_set_index] *
-                                       hypercube_weight;
+        const size_t hcDataIdx = hypercube_grid_point_data[hypercube_index];
+        for (std::size_t data_set_index = 0; data_set_index < numDataSets_; ++data_set_index) {
+            results[data_set_index] += grid_point_data_[hcDataIdx + data_set_index] * hypercube_weight;
         }
     }
     return results;
@@ -264,7 +263,7 @@ std::size_t RegularGridInterpolator::get_grid_point_index_relative(
 }
 
 
-std::vector<std::vector<double>>
+std::vector<size_t>
 RegularGridInterpolator::set_hypercube_grid_point_data(
     std::vector<size_t> const& floor_grid_point_coordinates)
 {
@@ -273,10 +272,9 @@ RegularGridInterpolator::set_hypercube_grid_point_data(
         return hypercube_cache.at(floor_grid_point_index);
     }
     std::size_t hypercube_index = 0;
-    std::vector<std::vector<double>> hypercube_grid_point_data(hypercube.size(), std::vector<double>(numDataSets_));
+    std::vector<size_t> hypercube_grid_point_data(hypercube.size(), 0);
     for (const auto& v : hypercube) {
-        hypercube_grid_point_data[hypercube_index] =
-            get_grid_point_data(get_grid_point_index_relative(floor_grid_point_coordinates, v));
+        hypercube_grid_point_data[hypercube_index] = get_grid_point_index_relative(floor_grid_point_coordinates, v);
         ++hypercube_index;
     }
     hypercube_cache[floor_grid_point_index] = hypercube_grid_point_data;

@@ -54,13 +54,13 @@ class RegularGridInterpolator {
     // calculated data
     std::vector<std::vector<short>> hypercube; // A minimal set of indices near the target needed to
                                                // perform interpolation calculations.
-    std::unordered_map<size_t, std::vector<std::vector<double>>> hypercube_cache;
+    std::unordered_map<size_t, std::vector<size_t>> hypercube_cache;
 
     // Internal methods
     std::size_t get_grid_point_index_relative(const std::vector<std::size_t>& coordinates,
                                               const std::vector<short>& translation) const;
 
-    std::vector<std::vector<double>> set_hypercube_grid_point_data(
+    std::vector<size_t> set_hypercube_grid_point_data(
         std::vector<size_t> const& floor_grid_point_coordinates);
 
     std::vector<double> get_grid_point_data(std::size_t grid_point_index) const;
