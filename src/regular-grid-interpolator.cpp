@@ -68,7 +68,7 @@ RegularGridInterpolator::RegularGridInterpolator(
     for (std::size_t axis_index = grid_axes.size(); axis_index-- > 0;) {
         const std::size_t length =
             grid_axes[axis_index].get_values().size(); // length > 0 ensured by GridAxis constructor
-        grid_axis_step_size_[axis_index] = number_of_grid_points_;
+        grid_axis_step_size_[axis_index] = number_of_grid_points_ * numDataSets_;
         number_of_grid_points_ *= length;
     }
 
@@ -205,7 +205,7 @@ std::vector<double> RegularGridInterpolator::solve(const std::vector<double>& ta
      
     std::vector<double> floor_to_ceiling_fractions = calculate_floor_to_ceiling_fractions(target_in, floor_grid_point_coordinates, grid_axes_);
     auto weighting_factors = calculate_interpolation_coefficients(floor_to_ceiling_fractions, floor_grid_point_coordinates, grid_axes_, cubic_spacing_ratios_, interpolation_method_ == InterpolationMethod::cubic);
-    auto hypercube_grid_point_data = set_hypercube_grid_point_data(floor_grid_point_coordinates);
+    auto hypercube_grid_point_data = get_hypercube_grid_data_indices(floor_grid_point_coordinates);
     // get results
     std::vector<double> results(numDataSets_, 0);
     for (std::size_t hypercube_index = 0; hypercube_index < hypercube.size(); ++hypercube_index) {
@@ -218,24 +218,15 @@ std::vector<double> RegularGridInterpolator::solve(const std::vector<double>& ta
     return results;
 }
 
-std::vector<double> RegularGridInterpolator::get_grid_point_data(std::size_t grid_point_index) const
-{
-    std::vector<double> temporary_grid_point_data(numDataSets_, 0.); 
-    for (std::size_t i = 0; i < numDataSets_; ++i) {
-        temporary_grid_point_data[i] = grid_point_data_[grid_point_index+i];
-    }
-    return temporary_grid_point_data;
-}
-
 namespace
 {
     std::size_t get_grid_point_index(
-        std::vector<std::size_t> const& coords, std::vector<size_t> const& grid_axis_step_size, size_t numDatasets)
+        std::vector<std::size_t> const& coords, std::vector<size_t> const& grid_axis_step_size)
     {
         assert(coords.size() == grid_axis_step_size.size());
         std::size_t grid_point_index = 0;
         for (std::size_t axis_index = 0; axis_index < coords.size(); ++axis_index) {
-            grid_point_index += coords[axis_index] * grid_axis_step_size[axis_index] * numDatasets;
+            grid_point_index += coords[axis_index] * grid_axis_step_size[axis_index];
         }
         return grid_point_index;
     }
@@ -259,15 +250,15 @@ std::size_t RegularGridInterpolator::get_grid_point_index_relative(
             temporary_coordinates[axis_index] = new_coord;
         }
     }
-    return get_grid_point_index(temporary_coordinates, grid_axis_step_size_, numDataSets_);
+    return get_grid_point_index(temporary_coordinates, grid_axis_step_size_);
 }
 
 
 std::vector<size_t>
-RegularGridInterpolator::set_hypercube_grid_point_data(
+RegularGridInterpolator::get_hypercube_grid_data_indices(
     std::vector<size_t> const& floor_grid_point_coordinates)
 {
-    const size_t floor_grid_point_index = get_grid_point_index(floor_grid_point_coordinates, grid_axis_step_size_, numDataSets_); // Index of the floor_grid_point_coordinates (used for hypercube caching)
+    const size_t floor_grid_point_index = get_grid_point_index(floor_grid_point_coordinates, grid_axis_step_size_); // Index of the floor_grid_point_coordinates (used for hypercube caching)
     if (hypercube_cache.count(floor_grid_point_index)) {
         return hypercube_cache.at(floor_grid_point_index);
     }

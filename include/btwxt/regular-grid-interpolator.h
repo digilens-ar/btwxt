@@ -52,18 +52,16 @@ class RegularGridInterpolator {
                               // and the ceiling doesn't use the last entry.
 
     // calculated data
-    std::vector<std::vector<short>> hypercube; // A minimal set of indices near the target needed to
+    std::vector<std::vector<short>> hypercube; // The minimal set of indices relative to the target's nearest grid point needed to
                                                // perform interpolation calculations.
-    std::unordered_map<size_t, std::vector<size_t>> hypercube_cache;
+    std::unordered_map<size_t, std::vector<size_t>> hypercube_cache; // stores the grid point data indices for each element of the hypercube for a given floor index. Frankly this doesn't seem necessary.
 
     // Internal methods
     std::size_t get_grid_point_index_relative(const std::vector<std::size_t>& coordinates,
                                               const std::vector<short>& translation) const;
 
-    std::vector<size_t> set_hypercube_grid_point_data(
+    std::vector<size_t> get_hypercube_grid_data_indices(
         std::vector<size_t> const& floor_grid_point_coordinates);
-
-    std::vector<double> get_grid_point_data(std::size_t grid_point_index) const;
 };
 
 } // namespace Btwxt
