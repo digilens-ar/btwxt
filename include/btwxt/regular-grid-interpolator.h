@@ -4,6 +4,7 @@
 #pragma once
 
 // Standard
+#include <memory_resource>
 #include <vector>
 #include "grid-axis.h"
 
@@ -16,7 +17,9 @@ class RegularGridInterpolator {
     RegularGridInterpolator(const std::vector<GridAxis>& grid_axes,
                                           const std::vector<std::vector<double>>& grid_point_data_sets, InterpolationMethod intMethod=InterpolationMethod::linear);
 
-    [[nodiscard]] std::vector<double> solve(std::vector<double> const& target);
+    RegularGridInterpolator(RegularGridInterpolator const& other);
+
+    [[nodiscard]] std::pmr::vector<double> solve(std::vector<double> const& target);
 
     // Public getters
 
@@ -56,12 +59,14 @@ class RegularGridInterpolator {
                                                // perform interpolation calculations.
     std::unordered_map<size_t, std::vector<size_t>> hypercube_cache; // stores the grid point data indices for each element of the hypercube for a given floor index. Frankly this doesn't seem necessary.
 
+    mutable std::pmr::monotonic_buffer_resource buff_; // memory arena for data that is no longer used once we start a new call to solve()
+
     // Internal methods
-    std::size_t get_grid_point_index_relative(const std::vector<std::size_t>& coordinates,
+    std::size_t get_grid_point_index_relative(const std::pmr::vector<std::size_t>& coordinates,
                                               const std::vector<short>& translation) const;
 
-    std::vector<size_t> get_hypercube_grid_data_indices(
-        std::vector<size_t> const& floor_grid_point_coordinates);
+    std::vector<size_t> const& get_hypercube_grid_data_indices(
+        std::pmr::vector<size_t> const& floor_grid_point_coordinates);
 };
 
 } // namespace Btwxt
