@@ -38,9 +38,7 @@ RegularGridInterpolator::RegularGridInterpolator(
     , numDataSets_(numDataSets)
     , grid_axis_step_size_(grid_axes.size()),
     interpolation_method_(intMethod),
-    grid_point_data_(std::move(grid_point_data_buffer)),
-    buff_(),
-    pool_(&buff_)
+    grid_point_data_(std::move(grid_point_data_buffer))
 {
     if (interpolation_method_ == InterpolationMethod::cubic) {
         for (auto const& ax : grid_axes_)
@@ -106,20 +104,6 @@ RegularGridInterpolator::RegularGridInterpolator(const std::vector<GridAxis>& gr
         }
     }
 }
-
-RegularGridInterpolator::RegularGridInterpolator(RegularGridInterpolator const& other):
-    grid_axes_(other.grid_axes_),
-    grid_point_data_(other.grid_point_data_),
-    numDataSets_(other.numDataSets_),
-    number_of_grid_points_(other.number_of_grid_points_),
-    grid_axis_step_size_(other.grid_axis_step_size_),
-    interpolation_method_(other.interpolation_method_),
-    cubic_spacing_ratios_(other.cubic_spacing_ratios_),
-    hypercube(other.hypercube),
-    hypercube_cache(other.hypercube_cache),
-    buff_(),
-    pool_()
-{}
 
 namespace
 {
@@ -208,8 +192,12 @@ namespace
     }
 }
 
-std::pmr::vector<double> RegularGridInterpolator::solve(const std::vector<double>& target_in)
+std::vector<double> RegularGridInterpolator::solve(std::vector<double> const& target_in)
 {
+    std::array<std::byte, 4096> stackBuffer;
+    std::pmr::monotonic_buffer_resource buff_(stackBuffer.data(), stackBuffer.size(), std::pmr::null_memory_resource());
+    std::pmr::unsynchronized_pool_resource pool_(&buff_);
+
     //set_target
     assert(target_in.size() == grid_axes_.size());
     std::pmr::vector<std::size_t> floor_grid_point_coordinates(grid_axes_.size(), 0, std::pmr::polymorphic_allocator<size_t>(&pool_)); // coordinates of the grid point <= target
@@ -230,9 +218,9 @@ std::pmr::vector<double> RegularGridInterpolator::solve(const std::vector<double
      
     std::pmr::vector<double> floor_to_ceiling_fractions = calculate_floor_to_ceiling_fractions(target_in, floor_grid_point_coordinates, grid_axes_, &pool_);
     auto weighting_factors = calculate_interpolation_coefficients(floor_to_ceiling_fractions, floor_grid_point_coordinates, grid_axes_, cubic_spacing_ratios_, interpolation_method_ == InterpolationMethod::cubic, &pool_);
-    auto hypercube_grid_point_data = get_hypercube_grid_data_indices(floor_grid_point_coordinates);
+    auto hypercube_grid_point_data = get_hypercube_grid_data_indices(floor_grid_point_coordinates, &pool_);
     // get results
-    std::pmr::vector<double> results(numDataSets_, 0, std::pmr::polymorphic_allocator<double>(&pool_));
+    std::vector<double> results(numDataSets_, 0);
     for (std::size_t hypercube_index = 0; hypercube_index < hypercube.size(); ++hypercube_index) {
         const double hypercube_weight = get_grid_point_weighting_factor(hypercube[hypercube_index], weighting_factors);
         const size_t hcDataIdx = hypercube_grid_point_data[hypercube_index] * numDataSets_;
@@ -259,9 +247,9 @@ namespace
 // Internal calculation methods
 
 std::size_t RegularGridInterpolator::get_grid_point_index_relative(
-    const std::pmr::vector<std::size_t>& coords, const std::vector<short>& translation) const
+    const std::pmr::vector<std::size_t>& coords, const std::vector<short>& translation, std::pmr::memory_resource* rsrc) const
 {
-    std::pmr::vector<std::size_t> temporary_coordinates(grid_axes_.size(), std::pmr::polymorphic_allocator<size_t>(&pool_));
+    std::pmr::vector<std::size_t> temporary_coordinates(grid_axes_.size(), std::pmr::polymorphic_allocator<size_t>(rsrc));
     for (std::size_t axis_index = 0; axis_index < coords.size(); axis_index++) {
         int new_coord = static_cast<int>(coords[axis_index]) + translation[axis_index];
         const int length = static_cast<int>(grid_axes_[axis_index].get_values().size());
@@ -279,7 +267,7 @@ std::size_t RegularGridInterpolator::get_grid_point_index_relative(
 }
 
 std::vector<size_t> const& RegularGridInterpolator::get_hypercube_grid_data_indices(
-    std::pmr::vector<size_t> const& floor_grid_point_coordinates)
+    std::pmr::vector<size_t> const& floor_grid_point_coordinates, std::pmr::memory_resource* rsrc)
 {
     const size_t floor_grid_point_index = get_grid_point_index(floor_grid_point_coordinates, grid_axis_step_size_); // Index of the floor_grid_point_coordinates (used for hypercube caching)
     auto& cacheItem = hypercube_cache[floor_grid_point_index];
@@ -288,7 +276,7 @@ std::vector<size_t> const& RegularGridInterpolator::get_hypercube_grid_data_indi
     }
     size_t idx=0;
     for (const auto& v : hypercube) {
-        cacheItem[idx++] = get_grid_point_index_relative(floor_grid_point_coordinates, v);
+        cacheItem[idx++] = get_grid_point_index_relative(floor_grid_point_coordinates, v, rsrc);
     }
     return cacheItem;
 }
