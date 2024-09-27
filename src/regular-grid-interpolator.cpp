@@ -215,10 +215,10 @@ std::pmr::vector<double> RegularGridInterpolator::solve(const std::vector<double
             throw std::runtime_error("Target is out of interpolation range");
         if (target_in[axis_index] == axis_values.back()) [[unlikely]] {
             floor_grid_point_coordinates[axis_index] =
-                std::max(length - 2, 0); // length-2 because that's the left side of the (length-2, length-1) edge. TODO check if this can be simplified out
+                std::max(length - 2, 0); // length-2 because that's the left side of the (length-2, length-1) edge.
         }
         else {
-            auto upper = std::upper_bound(axis_values.begin(), axis_values.end(), target_in[axis_index]); //TODO this is slow for uniformly spaced values
+            auto upper = std::upper_bound(axis_values.begin(), axis_values.end(), target_in[axis_index]); //TODO this is unnecesearily slow for uniformly spaced values. However, profiling shows that this is only taking ~1% of function time, so probably not worth fixing.
             floor_grid_point_coordinates[axis_index] = upper - axis_values.begin() - 1;
         }
     }
@@ -281,7 +281,6 @@ std::vector<size_t> const& RegularGridInterpolator::get_hypercube_grid_data_indi
     if (cacheItem[0] != std::numeric_limits<size_t>::max()) {
         return cacheItem;
     }
-    // auto [it, success] = hypercube_cache.emplace(std::pair {floor_grid_point_index, std::vector<size_t>(hypercube.size(), 0)});
     size_t idx=0;
     for (const auto& v : hypercube) {
         cacheItem[idx++] = get_grid_point_index_relative(floor_grid_point_coordinates, v);
