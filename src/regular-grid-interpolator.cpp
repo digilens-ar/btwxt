@@ -18,7 +18,7 @@ namespace {
 
         for (size_t i=0; i<in.at(0).size(); i++) {
             for (auto const& dset : in) {
-                out.push_back(dset.at(i));
+                out.push_back(dset[i]);
             }
         }
         return out;
@@ -70,7 +70,7 @@ RegularGridInterpolator::RegularGridInterpolator(
     for (std::size_t axis_index = grid_axes.size(); axis_index-- > 0;) {
         const std::size_t length =
             grid_axes[axis_index].get_values().size(); // length > 0 ensured by GridAxis constructor
-        grid_axis_step_size_[axis_index] = number_of_grid_points_ * numDataSets_;
+        grid_axis_step_size_[axis_index] = number_of_grid_points_;
         number_of_grid_points_ *= length;
     }
 
@@ -98,6 +98,8 @@ RegularGridInterpolator::RegularGridInterpolator(
         }
         hypercube = std::move(r);
     }
+
+    hypercube_cache.resize(number_of_grid_points_, std::vector<size_t>(hypercube.size(), std::numeric_limits<size_t>::max())); // Use size_t max as an indication of uninitialized cache
 }
 
 RegularGridInterpolator::RegularGridInterpolator(RegularGridInterpolator const& other):
@@ -132,14 +134,14 @@ namespace
             double mu = floor_to_ceiling_fractions[axis_index];
             std::array<double, 2> interpolation_coefficients;
             std::array<double, 2> cubic_slope_coefficients;
-            const bool isCubic = cubicInterpolation && grid_axes.at(axis_index).get_values().size() > 1;
+            const bool isCubic = cubicInterpolation && grid_axes[axis_index].get_values().size() > 1;
             if (isCubic) {
                 interpolation_coefficients[floor] = 2 * mu * mu * mu - 3 * mu * mu + 1;
                 interpolation_coefficients[ceiling] = -2 * mu * mu * mu + 3 * mu * mu;
                 cubic_slope_coefficients[floor] =
-                    (mu * mu * mu - 2 * mu * mu + mu) * cubicSpacingRatios.at(axis_index).at(floor).at(floor_grid_point_coordinates.at(axis_index));
+                    (mu * mu * mu - 2 * mu * mu + mu) * cubicSpacingRatios[axis_index][floor][floor_grid_point_coordinates[axis_index]];
                 cubic_slope_coefficients[ceiling] =
-                    (mu * mu * mu - mu * mu) * cubicSpacingRatios.at(axis_index).at(ceiling).at(floor_grid_point_coordinates.at(axis_index));
+                    (mu * mu * mu - mu * mu) * cubicSpacingRatios[axis_index][ceiling][floor_grid_point_coordinates[axis_index]];
             }
             else {
                 interpolation_coefficients[floor] = 1 - mu;
@@ -228,7 +230,7 @@ std::pmr::vector<double> RegularGridInterpolator::solve(const std::vector<double
     std::pmr::vector<double> results(numDataSets_, 0, std::pmr::polymorphic_allocator<double>(&pool_));
     for (std::size_t hypercube_index = 0; hypercube_index < hypercube.size(); ++hypercube_index) {
         const double hypercube_weight = get_grid_point_weighting_factor(hypercube[hypercube_index], weighting_factors);
-        const size_t hcDataIdx = hypercube_grid_point_data[hypercube_index];
+        const size_t hcDataIdx = hypercube_grid_point_data[hypercube_index] * numDataSets_;
         for (std::size_t data_set_index = 0; data_set_index < numDataSets_; ++data_set_index) {
             results[data_set_index] += grid_point_data_[hcDataIdx + data_set_index] * hypercube_weight;
         }
@@ -271,21 +273,19 @@ std::size_t RegularGridInterpolator::get_grid_point_index_relative(
     return get_grid_point_index(temporary_coordinates, grid_axis_step_size_);
 }
 
-
 std::vector<size_t> const& RegularGridInterpolator::get_hypercube_grid_data_indices(
     std::pmr::vector<size_t> const& floor_grid_point_coordinates)
 {
     const size_t floor_grid_point_index = get_grid_point_index(floor_grid_point_coordinates, grid_axis_step_size_); // Index of the floor_grid_point_coordinates (used for hypercube caching)
-    if (auto it=hypercube_cache.find(floor_grid_point_index); it != hypercube_cache.end()) {
-        return it->second;
+    auto& cacheItem = hypercube_cache[floor_grid_point_index];
+    if (cacheItem[0] != std::numeric_limits<size_t>::max()) {
+        return cacheItem;
     }
-    std::size_t hypercube_index = 0;
-    auto [it, success] = hypercube_cache.emplace(std::pair {floor_grid_point_index, std::vector<size_t>(hypercube.size(), 0)});
-    auto& hypercube_grid_point_data = it->second;
+    // auto [it, success] = hypercube_cache.emplace(std::pair {floor_grid_point_index, std::vector<size_t>(hypercube.size(), 0)});
+    size_t idx=0;
     for (const auto& v : hypercube) {
-        hypercube_grid_point_data[hypercube_index] = get_grid_point_index_relative(floor_grid_point_coordinates, v);
-        ++hypercube_index;
+        cacheItem[idx++] = get_grid_point_index_relative(floor_grid_point_coordinates, v);
     }
-    return hypercube_grid_point_data;
+    return cacheItem;
 }
 } // namespace Btwxt
