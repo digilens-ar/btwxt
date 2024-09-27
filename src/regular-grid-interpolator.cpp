@@ -27,21 +27,21 @@ namespace {
 
 namespace Btwxt {
 
+
 RegularGridInterpolator::RegularGridInterpolator(
     const std::vector<GridAxis>& grid_axes,
-    const std::vector<std::vector<double>>& grid_point_data_sets_,
+    size_t numDataSets,
+    std::vector<double> grid_point_data_buffer,
     InterpolationMethod intMethod)
     :
     grid_axes_(grid_axes)
-    , numDataSets_(grid_point_data_sets_.size())
+    , numDataSets_(numDataSets)
     , grid_axis_step_size_(grid_axes.size()),
     interpolation_method_(intMethod),
+    grid_point_data_(std::move(grid_point_data_buffer)),
     buff_(),
     pool_(&buff_)
 {
-
-    grid_point_data_ = derasterData(grid_point_data_sets_);
-
     if (interpolation_method_ == InterpolationMethod::cubic) {
         for (auto const& ax : grid_axes_)
         {
@@ -74,15 +74,7 @@ RegularGridInterpolator::RegularGridInterpolator(
         number_of_grid_points_ *= length;
     }
 
-    // Check grid point data set sizes
-    for (const auto& grid_point_data_set : grid_point_data_sets_) {
-        if (grid_point_data_set.size() != number_of_grid_points_) {
-            throw std::runtime_error(std::format(
-            "GridPointDataSet: Size ({}) does not match number of grid points ({}).",
-            grid_point_data_set.size(),
-            number_of_grid_points_));
-        }
-    }
+    assert(grid_point_data_.size() == number_of_grid_points_ * numDataSets_);
 
     hypercube = {{}};
     for (auto const& ax : grid_axes_) {
@@ -100,6 +92,19 @@ RegularGridInterpolator::RegularGridInterpolator(
     }
 
     hypercube_cache.resize(number_of_grid_points_, std::vector<size_t>(hypercube.size(), std::numeric_limits<size_t>::max())); // Use size_t max as an indication of uninitialized cache
+}
+
+RegularGridInterpolator::RegularGridInterpolator(const std::vector<GridAxis>& grid_axes, const std::vector<std::vector<double>>& grid_point_data_sets_, InterpolationMethod intMethod):
+    RegularGridInterpolator(grid_axes, grid_point_data_sets_.size(), derasterData(grid_point_data_sets_), intMethod)
+{
+    for (const auto& grid_point_data_set : grid_point_data_sets_) {
+        if (grid_point_data_set.size() != number_of_grid_points_) {
+            throw std::runtime_error(std::format(
+            "GridPointDataSet: Size ({}) does not match number of grid points ({}).",
+            grid_point_data_set.size(),
+            number_of_grid_points_));
+        }
+    }
 }
 
 RegularGridInterpolator::RegularGridInterpolator(RegularGridInterpolator const& other):

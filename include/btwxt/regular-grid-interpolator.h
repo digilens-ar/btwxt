@@ -14,8 +14,19 @@ namespace Btwxt {
 class RegularGridInterpolator {
   public:
 
-    RegularGridInterpolator(const std::vector<GridAxis>& grid_axes,
-                                          const std::vector<std::vector<double>>& grid_point_data_sets, InterpolationMethod intMethod=InterpolationMethod::linear);
+    // grid_point_data_buffer should have its data stored such that the dataset axis is the "fast axis", grid_axes.back() is the 2nd fastest axis, and grid_axes[0] is the "slow axis"
+    RegularGridInterpolator(
+        std::vector<GridAxis> const& grid_axes,
+        size_t numDataSets,
+        std::vector<double> grid_point_data_buffer, 
+        InterpolationMethod intMethod=InterpolationMethod::linear);
+
+    //This constructor will have some overhead to convert grid_point_data_sets to the form used in the first constructor
+    // each entry to grid_point_data_sets should have its data stored such that grid_axes.back() is the "fast axis" and grid_axes[0] is the "slow axis"
+    RegularGridInterpolator(
+        std::vector<GridAxis> const& grid_axes,
+        std::vector<std::vector<double>> const& grid_point_data_sets, 
+        InterpolationMethod intMethod=InterpolationMethod::linear);
 
     RegularGridInterpolator(RegularGridInterpolator const& other);
 
