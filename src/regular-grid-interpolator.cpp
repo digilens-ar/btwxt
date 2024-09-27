@@ -35,7 +35,9 @@ RegularGridInterpolator::RegularGridInterpolator(
     grid_axes_(grid_axes)
     , numDataSets_(grid_point_data_sets_.size())
     , grid_axis_step_size_(grid_axes.size()),
-    interpolation_method_(intMethod)
+    interpolation_method_(intMethod),
+    buff_(),
+    pool_(&buff_)
 {
 
     grid_point_data_ = derasterData(grid_point_data_sets_);
@@ -108,7 +110,8 @@ RegularGridInterpolator::RegularGridInterpolator(RegularGridInterpolator const& 
     cubic_spacing_ratios_(other.cubic_spacing_ratios_),
     hypercube(other.hypercube),
     hypercube_cache(other.hypercube_cache),
-    buff_()
+    buff_(),
+    pool_()
 {}
 
 namespace
@@ -200,10 +203,9 @@ namespace
 
 std::pmr::vector<double> RegularGridInterpolator::solve(const std::vector<double>& target_in)
 {
-    buff_.release(); //TODO this is wrong. Is it?
     //set_target
     assert(target_in.size() == grid_axes_.size());
-    std::pmr::vector<std::size_t> floor_grid_point_coordinates(grid_axes_.size(), 0, std::pmr::polymorphic_allocator<size_t>(&buff_)); // coordinates of the grid point <= target
+    std::pmr::vector<std::size_t> floor_grid_point_coordinates(grid_axes_.size(), 0, std::pmr::polymorphic_allocator<size_t>(&pool_)); // coordinates of the grid point <= target
     for (std::size_t axis_index = 0; axis_index < grid_axes_.size(); axis_index += 1) {
         const auto& axis_values = grid_axes_[axis_index].get_values();
         const int length = static_cast<int>(axis_values.size());
@@ -219,11 +221,11 @@ std::pmr::vector<double> RegularGridInterpolator::solve(const std::vector<double
         }
     }
      
-    std::pmr::vector<double> floor_to_ceiling_fractions = calculate_floor_to_ceiling_fractions(target_in, floor_grid_point_coordinates, grid_axes_, &buff_);
-    auto weighting_factors = calculate_interpolation_coefficients(floor_to_ceiling_fractions, floor_grid_point_coordinates, grid_axes_, cubic_spacing_ratios_, interpolation_method_ == InterpolationMethod::cubic, &buff_);
+    std::pmr::vector<double> floor_to_ceiling_fractions = calculate_floor_to_ceiling_fractions(target_in, floor_grid_point_coordinates, grid_axes_, &pool_);
+    auto weighting_factors = calculate_interpolation_coefficients(floor_to_ceiling_fractions, floor_grid_point_coordinates, grid_axes_, cubic_spacing_ratios_, interpolation_method_ == InterpolationMethod::cubic, &pool_);
     auto hypercube_grid_point_data = get_hypercube_grid_data_indices(floor_grid_point_coordinates);
     // get results
-    std::pmr::vector<double> results(numDataSets_, 0, std::pmr::polymorphic_allocator<double>(&buff_));
+    std::pmr::vector<double> results(numDataSets_, 0, std::pmr::polymorphic_allocator<double>(&pool_));
     for (std::size_t hypercube_index = 0; hypercube_index < hypercube.size(); ++hypercube_index) {
         const double hypercube_weight = get_grid_point_weighting_factor(hypercube[hypercube_index], weighting_factors);
         const size_t hcDataIdx = hypercube_grid_point_data[hypercube_index];
@@ -252,7 +254,7 @@ namespace
 std::size_t RegularGridInterpolator::get_grid_point_index_relative(
     const std::pmr::vector<std::size_t>& coords, const std::vector<short>& translation) const
 {
-    std::pmr::vector<std::size_t> temporary_coordinates(grid_axes_.size(), std::pmr::polymorphic_allocator<size_t>(&buff_));
+    std::pmr::vector<std::size_t> temporary_coordinates(grid_axes_.size(), std::pmr::polymorphic_allocator<size_t>(&pool_));
     for (std::size_t axis_index = 0; axis_index < coords.size(); axis_index++) {
         int new_coord = static_cast<int>(coords[axis_index]) + translation[axis_index];
         const int length = static_cast<int>(grid_axes_[axis_index].get_values().size());

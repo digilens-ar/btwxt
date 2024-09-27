@@ -60,7 +60,7 @@ class RegularGridInterpolator {
     std::unordered_map<size_t, std::vector<size_t>> hypercube_cache; // stores the grid point data indices for each element of the hypercube for a given floor index. Frankly this doesn't seem necessary.
 
     mutable std::pmr::monotonic_buffer_resource buff_; // memory arena for data that is no longer used once we start a new call to solve()
-
+    mutable std::pmr::unsynchronized_pool_resource pool_;
     // Internal methods
     std::size_t get_grid_point_index_relative(const std::pmr::vector<std::size_t>& coordinates,
                                               const std::vector<short>& translation) const;
