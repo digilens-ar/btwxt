@@ -192,7 +192,7 @@ namespace
     }
 }
 
-std::vector<double> RegularGridInterpolator::solve(std::vector<double> const& target_in)
+std::pmr::vector<double> RegularGridInterpolator::solve(std::vector<double> const& target_in, std::pmr::memory_resource* rsrc)
 {
     std::array<std::byte, 4096> stackBuffer;
     std::pmr::monotonic_buffer_resource buff_(stackBuffer.data(), stackBuffer.size(), std::pmr::null_memory_resource());
@@ -220,7 +220,7 @@ std::vector<double> RegularGridInterpolator::solve(std::vector<double> const& ta
     auto weighting_factors = calculate_interpolation_coefficients(floor_to_ceiling_fractions, floor_grid_point_coordinates, grid_axes_, cubic_spacing_ratios_, interpolation_method_ == InterpolationMethod::cubic, &pool_);
     auto hypercube_grid_point_data = get_hypercube_grid_data_indices(floor_grid_point_coordinates, &pool_);
     // get results
-    std::vector<double> results(numDataSets_, 0);
+    std::pmr::vector<double> results(numDataSets_, 0, rsrc);
     for (std::size_t hypercube_index = 0; hypercube_index < hypercube.size(); ++hypercube_index) {
         const double hypercube_weight = get_grid_point_weighting_factor(hypercube[hypercube_index], weighting_factors);
         const size_t hcDataIdx = hypercube_grid_point_data[hypercube_index] * numDataSets_;
