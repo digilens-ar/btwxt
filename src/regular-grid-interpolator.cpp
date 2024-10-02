@@ -195,7 +195,7 @@ namespace
 std::pmr::vector<double> RegularGridInterpolator::solve(std::vector<double> const& target_in, std::pmr::memory_resource* rsrc)
 {
     std::array<std::byte, 4096> stackBuffer;
-    std::pmr::monotonic_buffer_resource buff_(stackBuffer.data(), stackBuffer.size(), std::pmr::null_memory_resource());
+    std::pmr::monotonic_buffer_resource buff_(stackBuffer.data(), stackBuffer.size());
     std::pmr::unsynchronized_pool_resource pool_(&buff_);
 
     //set_target
