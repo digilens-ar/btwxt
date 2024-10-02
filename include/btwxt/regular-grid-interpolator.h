@@ -28,7 +28,8 @@ class RegularGridInterpolator {
         std::vector<std::vector<double>> const& grid_point_data_sets, 
         InterpolationMethod intMethod=InterpolationMethod::linear);
 
-    [[nodiscard]] std::pmr::vector<double> solve(std::vector<double> const& target, std::pmr::memory_resource* rsrc=std::pmr::get_default_resource());
+    // If a value of target is outside the interpolation range, it will modified to lie within range.
+    [[nodiscard]] std::pmr::vector<double> solve(std::vector<double>& target, std::pmr::memory_resource* rsrc=std::pmr::get_default_resource());
 
     // Public getters
     [[nodiscard]] std::size_t get_number_of_grid_axes() const

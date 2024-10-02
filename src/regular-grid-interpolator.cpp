@@ -192,7 +192,7 @@ namespace
     }
 }
 
-std::pmr::vector<double> RegularGridInterpolator::solve(std::vector<double> const& target_in, std::pmr::memory_resource* rsrc)
+std::pmr::vector<double> RegularGridInterpolator::solve(std::vector<double>& target_in, std::pmr::memory_resource* rsrc)
 {
     std::array<std::byte, 4096> stackBuffer;
     std::pmr::monotonic_buffer_resource buff_(stackBuffer.data(), stackBuffer.size());
@@ -204,8 +204,7 @@ std::pmr::vector<double> RegularGridInterpolator::solve(std::vector<double> cons
     for (std::size_t axis_index = 0; axis_index < grid_axes_.size(); axis_index += 1) {
         const auto& axis_values = grid_axes_[axis_index].get_values();
         const int length = static_cast<int>(axis_values.size());
-        if ((target_in[axis_index] < axis_values[0]) || (target_in[axis_index] > axis_values.back())) [[unlikely]]
-            throw std::runtime_error("Target is out of interpolation range");
+        target_in[axis_index] = std::clamp(target_in[axis_index], axis_values[0], axis_values.back()); // This effectively accomplishes constant extrapolation Forcing the target value to be treated as if it is in bounds
         if (target_in[axis_index] == axis_values.back()) [[unlikely]] {
             floor_grid_point_coordinates[axis_index] =
                 std::max(length - 2, 0); // length-2 because that's the left side of the (length-2, length-1) edge.
