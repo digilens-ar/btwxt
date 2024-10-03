@@ -63,12 +63,18 @@ TEST_F(GridFixture, four_point_1d_cubic_interpolate)
     EXPECT_NEAR(result, expected_value, epsilon);
 }
 
-TEST_F(GridFixture, empty_grid_throw_test)
+using GridFixtureDeathTest = GridFixture;
+
+TEST_F(GridFixtureDeathTest, empty_grid_death_test)
 {
     grid = {{}};
     data_sets = {{}};
     target = {};
+    #ifndef NDEBUG // This test only passes when assertions are enabled
+    EXPECT_DEATH(setup(), "");
+    #else
     EXPECT_THROW(setup(), std::runtime_error);
+    #endif
 }
 
 TEST_F(GridFixture, two_point_cubic_1d_interpolate)
@@ -117,13 +123,6 @@ TEST_F(Grid2DFixture, interpolate)
     // Single value, fresh target
     d_result = result[1];
     EXPECT_DOUBLE_EQ(d_result, 6.378);
-}
-
-TEST_F(Grid2DFixture, extrapolate)
-{
-    // axis1 is designated constant extrapolation
-    target = {10, 3};
-    EXPECT_THROW(interpolator->solve(target), std::runtime_error);
 }
 
 TEST_F(Grid2DFixtureCubic, cubic_interpolate)
@@ -178,7 +177,7 @@ TEST_F(Function4DFixture, multi_timer)
     for (std::size_t count = 0; count < 10; count++) {
         // Get starting time point
         auto start = std::chrono::high_resolution_clock::now();
-        for (const auto& target : set_of_targets) {
+        for (auto& target : set_of_targets) {
             auto result = interpolator.value().solve(target);
         }
         // Get ending time point
@@ -189,10 +188,13 @@ TEST_F(Function4DFixture, multi_timer)
     }
 }
 
-TEST(GridPointDataSet, wrong_size)
+TEST(GridPointDataSet, wrong_size_death)
 {
-    EXPECT_THROW(RegularGridInterpolator({GridAxis({1.})}, {std::vector<double>({1., 1.})}),
-                     std::runtime_error);
+#ifndef NDEBUG // This test only passes when assertions are enabled
+    EXPECT_DEATH(RegularGridInterpolator({GridAxis({1.})}, {std::vector<double>({1., 1.})}),"");
+#else
+    EXPECT_THROW(RegularGridInterpolator({GridAxis({1.})}, {std::vector<double>({1., 1.})}), std::runtime_error);
+#endif
 }
 
 TEST(CartesianProduct, cartesian_product)

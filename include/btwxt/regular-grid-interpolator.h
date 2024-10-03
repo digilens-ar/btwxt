@@ -5,6 +5,7 @@
 
 // Standard
 #include <memory_resource>
+#include <span>
 #include <vector>
 #include "grid-axis.h"
 #include "utility-p.hpp"
@@ -16,7 +17,7 @@ class RegularGridInterpolator {
 
     // grid_point_data_buffer should have its data stored such that the dataset axis is the "fast axis", grid_axes.back() is the 2nd fastest axis, and grid_axes[0] is the "slow axis"
     RegularGridInterpolator(
-        std::vector<GridAxis> const& grid_axes,
+        std::vector<GridAxis> grid_axes,
         size_t numDataSets,
         std::vector<double> grid_point_data_buffer, 
         InterpolationMethod intMethod=InterpolationMethod::linear);
@@ -24,12 +25,12 @@ class RegularGridInterpolator {
     //This constructor will have some overhead to convert grid_point_data_sets to the form used in the first constructor
     // each entry to grid_point_data_sets should have its data stored such that grid_axes.back() is the "fast axis" and grid_axes[0] is the "slow axis"
     RegularGridInterpolator(
-        std::vector<GridAxis> const& grid_axes,
+        std::vector<GridAxis> grid_axes,
         std::vector<std::vector<double>> const& grid_point_data_sets, 
         InterpolationMethod intMethod=InterpolationMethod::linear);
 
     // If a value of target is outside the interpolation range, it will modified to lie within range.
-    [[nodiscard]] std::pmr::vector<double> solve(std::vector<double>& target, std::pmr::memory_resource* rsrc=std::pmr::get_default_resource());
+    [[nodiscard]] std::pmr::vector<double> solve(std::span<double> target, std::pmr::memory_resource* rsrc=std::pmr::get_default_resource());
 
     // Public getters
     [[nodiscard]] std::size_t get_number_of_grid_axes() const
@@ -42,7 +43,7 @@ class RegularGridInterpolator {
         return number_of_grid_points_;
     };
 
-    [[nodiscard]] const GridAxis& get_grid_axis(std::size_t axis_index) const
+    [[nodiscard]] GridAxis const& get_grid_axis(std::size_t axis_index) const
     {
         return grid_axes_[axis_index];
     };

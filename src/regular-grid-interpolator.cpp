@@ -38,14 +38,14 @@ copiable_mutex_member& copiable_mutex_member::operator=(copiable_mutex_member co
 }
 
 RegularGridInterpolator::RegularGridInterpolator(
-    const std::vector<GridAxis>& grid_axes,
+    std::vector<GridAxis> grid_axes,
     size_t numDataSets,
     std::vector<double> grid_point_data_buffer,
     InterpolationMethod intMethod)
     :
-    grid_axes_(grid_axes)
+    grid_axes_(std::move(grid_axes))
     , numDataSets_(numDataSets)
-    , grid_axis_step_size_(grid_axes.size()),
+    , grid_axis_step_size_(grid_axes_.size()),
     interpolation_method_(intMethod),
     grid_point_data_(std::move(grid_point_data_buffer))
 {
@@ -74,9 +74,9 @@ RegularGridInterpolator::RegularGridInterpolator(
 
     // set axis sizes and calculate number of grid points
     number_of_grid_points_ = 1;
-    for (std::size_t axis_index = grid_axes.size(); axis_index-- > 0;) {
+    for (std::size_t axis_index = grid_axes_.size(); axis_index-- > 0;) {
         const std::size_t length =
-            grid_axes[axis_index].get_values().size(); // length > 0 ensured by GridAxis constructor
+            grid_axes_[axis_index].get_values().size(); // length > 0 ensured by GridAxis constructor
         grid_axis_step_size_[axis_index] = number_of_grid_points_;
         number_of_grid_points_ *= length;
     }
@@ -101,8 +101,8 @@ RegularGridInterpolator::RegularGridInterpolator(
     hypercube_cache.resize(number_of_grid_points_,  std::pair {copiable_mutex_member{}, std::vector<size_t>(hypercube.size(), std::numeric_limits<size_t>::max())}); // Use size_t max as an indication of uninitialized cache
 }
 
-RegularGridInterpolator::RegularGridInterpolator(const std::vector<GridAxis>& grid_axes, const std::vector<std::vector<double>>& grid_point_data_sets_, InterpolationMethod intMethod):
-    RegularGridInterpolator(grid_axes, grid_point_data_sets_.size(), derasterData(grid_point_data_sets_), intMethod)
+RegularGridInterpolator::RegularGridInterpolator(std::vector<GridAxis> grid_axes, const std::vector<std::vector<double>>& grid_point_data_sets_, InterpolationMethod intMethod):
+    RegularGridInterpolator(std::move(grid_axes), grid_point_data_sets_.size(), derasterData(grid_point_data_sets_), intMethod)
 {
     for (const auto& grid_point_data_set : grid_point_data_sets_) {
         if (grid_point_data_set.size() != number_of_grid_points_) {
@@ -170,7 +170,7 @@ namespace
     // for each axis, the fraction the target value
     // is between its floor and ceiling axis values
     std::pmr::vector<double> calculate_floor_to_ceiling_fractions(
-        std::vector<double> const& target, 
+        std::span<const double> target, 
         std::pmr::vector<size_t> const& floor_grid_point_coordinates, 
         std::vector<GridAxis> const& grid_axes,
         std::pmr::memory_resource* buffer)
@@ -201,7 +201,7 @@ namespace
     }
 }
 
-std::pmr::vector<double> RegularGridInterpolator::solve(std::vector<double>& target_in, std::pmr::memory_resource* rsrc)
+std::pmr::vector<double> RegularGridInterpolator::solve(std::span<double> target_in, std::pmr::memory_resource* rsrc)
 {
     std::array<std::byte, 4096> stackBuffer;
     std::pmr::monotonic_buffer_resource buff_(stackBuffer.data(), stackBuffer.size());
