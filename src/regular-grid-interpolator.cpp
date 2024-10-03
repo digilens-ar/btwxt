@@ -28,6 +28,15 @@ namespace {
 namespace Btwxt {
 
 
+copiable_mutex_member::copiable_mutex_member(copiable_mutex_member const& other):
+    std::mutex()
+{}
+
+copiable_mutex_member& copiable_mutex_member::operator=(copiable_mutex_member const& other)
+{
+    return *this;
+}
+
 RegularGridInterpolator::RegularGridInterpolator(
     const std::vector<GridAxis>& grid_axes,
     size_t numDataSets,
@@ -89,7 +98,7 @@ RegularGridInterpolator::RegularGridInterpolator(
         hypercube = std::move(r);
     }
 
-    hypercube_cache.resize(number_of_grid_points_, std::vector<size_t>(hypercube.size(), std::numeric_limits<size_t>::max())); // Use size_t max as an indication of uninitialized cache
+    hypercube_cache.resize(number_of_grid_points_,  std::pair {copiable_mutex_member{}, std::vector<size_t>(hypercube.size(), std::numeric_limits<size_t>::max())}); // Use size_t max as an indication of uninitialized cache
 }
 
 RegularGridInterpolator::RegularGridInterpolator(const std::vector<GridAxis>& grid_axes, const std::vector<std::vector<double>>& grid_point_data_sets_, InterpolationMethod intMethod):
@@ -268,15 +277,19 @@ std::size_t RegularGridInterpolator::get_grid_point_index_relative(
 std::vector<size_t> const& RegularGridInterpolator::get_hypercube_grid_data_indices(
     std::pmr::vector<size_t> const& floor_grid_point_coordinates, std::pmr::memory_resource* rsrc)
 {
+
     const size_t floor_grid_point_index = get_grid_point_index(floor_grid_point_coordinates, grid_axis_step_size_); // Index of the floor_grid_point_coordinates (used for hypercube caching)
-    auto& cacheItem = hypercube_cache[floor_grid_point_index];
-    if (cacheItem[0] != std::numeric_limits<size_t>::max()) {
+    {
+        auto& [cacheItemMutex, cacheItem] = hypercube_cache[floor_grid_point_index];
+        std::scoped_lock lock(cacheItemMutex);
+        if (cacheItem[0] != std::numeric_limits<size_t>::max()) {
+            return cacheItem;
+        }
+        size_t idx=0;
+        for (const auto& v : hypercube) {
+            cacheItem[idx++] = get_grid_point_index_relative(floor_grid_point_coordinates, v, rsrc);
+        }
         return cacheItem;
     }
-    size_t idx=0;
-    for (const auto& v : hypercube) {
-        cacheItem[idx++] = get_grid_point_index_relative(floor_grid_point_coordinates, v, rsrc);
-    }
-    return cacheItem;
 }
 } // namespace Btwxt

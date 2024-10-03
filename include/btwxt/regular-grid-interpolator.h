@@ -10,6 +10,16 @@
 
 namespace Btwxt {
 
+// A mutex that creates a new mutex when you try to copy it. This just allows having a unique mutex class member for each copy of a class without having to declare a copy constructor for that class.
+class copiable_mutex_member : public std::mutex
+{
+public:
+	copiable_mutex_member() = default;
+
+	copiable_mutex_member([[maybe_unused]] copiable_mutex_member const& other);
+
+	copiable_mutex_member& operator=([[maybe_unused]] copiable_mutex_member const& other);
+};
 
 class RegularGridInterpolator {
   public:
@@ -66,7 +76,7 @@ class RegularGridInterpolator {
     // calculated data
     std::vector<std::vector<short>> hypercube; // The minimal set of indices relative to the target's nearest grid point needed to
                                                // perform interpolation calculations.
-    std::vector<std::vector<size_t>> hypercube_cache; // stores the grid point data indices for each element of the hypercube for a given floor index. Frankly this doesn't seem necessary.
+    std::vector<std::pair<copiable_mutex_member, std::vector<size_t>>> hypercube_cache; // stores the grid point data indices for each element of the hypercube for a given floor index. Frankly this doesn't seem necessary.
 
     // Internal methods
     std::size_t get_grid_point_index_relative(const std::pmr::vector<std::size_t>& coordinates,
