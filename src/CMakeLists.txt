@@ -1,10 +1,8 @@
 
 add_library(btwxt
     STATIC
-    
     "regular-grid-interpolator.cpp"
-    
-    grid-axis.cpp
+    "grid-axis.cpp"
 )
 
 target_link_libraries(btwxt PRIVATE spdlog::spdlog)
@@ -12,7 +10,11 @@ target_sources(btwxt PUBLIC
     FILE_SET public_headers
     TYPE HEADERS
     BASE_DIRS "${PROJECT_SOURCE_DIR}/include"
-    FILES "${PROJECT_SOURCE_DIR}/include/btwxt/btwxt.h" "${PROJECT_SOURCE_DIR}/include/btwxt/grid-axis.h"  "${PROJECT_SOURCE_DIR}/include/btwxt/regular-grid-interpolator.h"
+    FILES 
+    "${PROJECT_SOURCE_DIR}/include/btwxt/btwxt.hpp"
+    "${PROJECT_SOURCE_DIR}/include/btwxt/grid-axis.hpp"
+    "${PROJECT_SOURCE_DIR}/include/btwxt/regular-grid-interpolator.hpp"
+    "${PROJECT_SOURCE_DIR}/include/btwxt/utility-p.hpp"
 )
 
 add_library(btwxt::btwxt ALIAS btwxt)  # Make this library accessible through the same name if you import or if you add subdirectory

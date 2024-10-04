@@ -11,7 +11,7 @@
 #include <gtest/gtest.h>
 
 // btwxt
-#include <btwxt/btwxt.h>
+#include <btwxt/btwxt.hpp>
 
 // testing
 #include "fixtures/public-fixtures.h" // EXPECT_STDOUT

@@ -7,7 +7,7 @@
 #include <memory_resource>
 #include <span>
 #include <vector>
-#include "grid-axis.h"
+#include "grid-axis.hpp"
 #include "utility-p.hpp"
 
 namespace Btwxt {

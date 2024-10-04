@@ -1,7 +1,7 @@
 /* Copyright (c) 2018 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
 
-#include <btwxt/grid-axis.h>
+#include <btwxt/grid-axis.hpp>
 #include <spdlog/spdlog.h>
 
 namespace Btwxt {

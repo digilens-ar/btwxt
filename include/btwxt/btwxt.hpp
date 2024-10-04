@@ -4,7 +4,7 @@
 #ifndef BTWXT_H_
 #define BTWXT_H_
 
-#include "grid-axis.h"
-#include "regular-grid-interpolator.h"
+#include "grid-axis.hpp"
+#include "regular-grid-interpolator.hpp"
 
 #endif // define BTWXT_H_

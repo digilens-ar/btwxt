@@ -11,7 +11,7 @@
 #include <gtest/gtest.h>
 
 // btwxt
-#include <btwxt/btwxt.h>
+#include <btwxt/btwxt.hpp>
 #include "fixtures/public-fixtures.h"
 #include "spdlog/spdlog.h"
 

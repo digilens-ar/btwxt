@@ -3,7 +3,7 @@
 
 #include <unordered_map>
 #include <cassert>
-#include <btwxt/regular-grid-interpolator.h>
+#include <btwxt/regular-grid-interpolator.hpp>
 
 #include <array>
 #include <format>
