@@ -4,77 +4,77 @@
 #pragma once
 
 // Standard
-#include <memory>
+#include <memory_resource>
+#include <span>
 #include <vector>
-
-// btwxt
 #include "grid-axis.h"
+#include "utility-p.hpp"
 
 namespace Btwxt {
 
-using GridPointDataSet = std::vector<double>; // Data corresponding to all points within a collection of grid axes. Length of data should equal the total number of permutations of grid axes points.
-
-class RegularGridInterpolatorImplementation;
-
-enum class TargetBoundsStatus {
-    below_lower_extrapolation_limit,
-    extrapolate_low,
-    interpolate,
-    extrapolate_high,
-    above_upper_extrapolation_limit
-};
-
-// this will be the public-facing class.
 class RegularGridInterpolator {
   public:
+
+    // grid_point_data_buffer should have its data stored such that the dataset axis is the "fast axis", grid_axes.back() is the 2nd fastest axis, and grid_axes[0] is the "slow axis"
     RegularGridInterpolator(
-        const std::vector<GridAxis>& grid_axes,
-        const std::vector<GridPointDataSet>& grid_point_data_sets);
+        std::vector<GridAxis> grid_axes,
+        size_t numDataSets,
+        std::vector<double> grid_point_data_buffer, 
+        InterpolationMethod intMethod=InterpolationMethod::linear);
 
-    ~RegularGridInterpolator();
+    //This constructor will have some overhead to convert grid_point_data_sets to the form used in the first constructor
+    // each entry to grid_point_data_sets should have its data stored such that grid_axes.back() is the "fast axis" and grid_axes[0] is the "slow axis"
+    RegularGridInterpolator(
+        std::vector<GridAxis> grid_axes,
+        std::vector<std::vector<double>> const& grid_point_data_sets, 
+        InterpolationMethod intMethod=InterpolationMethod::linear);
 
-    RegularGridInterpolator(const RegularGridInterpolator& source);
-
-    RegularGridInterpolator& operator=(const RegularGridInterpolator& source);
-
-    void set_axis_extrapolation_method(std::size_t axis_index, ExtrapolationMethod method);
-
-    void set_axis_interpolation_method(std::size_t axis_index, InterpolationMethod method);
-
-    void set_axis_extrapolation_limits(std::size_t axis_index,
-                                       const std::pair<double, double>& extrapolation_limits);
+    // If a value of target is outside the interpolation range, it will modified to lie within range.
+    [[nodiscard]] std::pmr::vector<double> solve(std::span<double> target, std::pmr::memory_resource* rsrc=std::pmr::get_default_resource());
 
     // Public getters
-    std::size_t get_number_of_dimensions() const;
+    [[nodiscard]] std::size_t get_number_of_grid_axes() const
+    {
+        return grid_axes_.size();
+    };
 
-    std::size_t get_number_of_grid_points() const;
+    [[nodiscard]] std::size_t get_number_of_grid_points() const
+    {
+        return number_of_grid_points_;
+    };
 
-    std::size_t get_number_of_grid_point_data_sets() const;
-
-    const GridPointDataSet& get_grid_point_data_set(std::size_t data_set_index) const;
-
-    const GridAxis& get_grid_axis(std::size_t axis_index) const;
-
-    // Public normalization methods
-    double normalize_grid_point_data_set_at_target(std::size_t data_set_index, double scalar = 1.0);
-
-    void normalize_grid_point_data_sets_at_target(double scalar = 1.0);
-
-    // Get results
-    void set_target(const std::vector<double>& target);
-
-    double get_value_at_target(std::size_t data_set_index) const;
-
-    std::vector<double> get_values_at_target() const;
-
-    [[nodiscard]] std::vector<std::size_t> get_neighboring_indices_at_target() const;
-
-    const std::vector<double>& get_target() const;
-
-    [[nodiscard]] const std::vector<TargetBoundsStatus>& get_target_bounds_status() const;
+    [[nodiscard]] GridAxis const& get_grid_axis(std::size_t axis_index) const
+    {
+        return grid_axes_[axis_index];
+    };
 
   private:
-    std::unique_ptr<RegularGridInterpolatorImplementation> implementation;
+    // Structured data
+    std::vector<GridAxis> grid_axes_;
+    std::vector<double> grid_point_data_;
+    size_t numDataSets_;
+    std::size_t number_of_grid_points_ {0u};
+    std::vector<std::size_t> grid_axis_step_size_;   // Used to translate grid point coordinates to
+                                                    // indices (size = number_of_grid_axes)
+
+    InterpolationMethod interpolation_method_;
+    std::vector<std::array<std::vector<double>, 2>>
+        cubic_spacing_ratios_; // Used for cubic interpolation. Outer vector is size 2: 0: spacing
+                              // for the floor, 1: spacing for the ceiling. Inner vector is length
+                              // of axis values, but the floor vector doesn't use the first entry
+                              // and the ceiling doesn't use the last entry.
+
+    // calculated data
+    std::vector<std::vector<short>> hypercube; // The minimal set of indices relative to the target's nearest grid point needed to
+                                               // perform interpolation calculations.
+    std::vector<std::pair<copiable_mutex_member, std::vector<size_t>>> hypercube_cache; // stores the grid point data indices for each element of the hypercube for a given floor index. Frankly this doesn't seem necessary.
+
+    // Internal methods
+    std::size_t get_grid_point_index_relative(const std::pmr::vector<std::size_t>& coordinates,
+                                              const std::vector<short>& translation, std::pmr::memory_resource* rsrc) const;
+
+    std::vector<size_t> const& get_hypercube_grid_data_indices(
+        std::pmr::vector<size_t> const& floor_grid_point_coordinates, std::pmr::memory_resource* rsrc);
 };
 
 } // namespace Btwxt

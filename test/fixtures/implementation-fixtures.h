@@ -7,22 +7,39 @@
 #include <gtest/gtest.h>
 
 // btwxt
-#include "regular-grid-interpolator-implementation.h"
 #include <btwxt/btwxt.h>
 
 namespace Btwxt {
 
+
+inline std::vector<GridAxis> construct_grid_axes(const std::vector<std::vector<double>>& grid_axis_vectors)
+{
+    std::vector<GridAxis> grid_axes;
+    grid_axes.reserve(grid_axis_vectors.size());
+    for (const auto& axis : grid_axis_vectors) {
+        grid_axes.emplace_back(axis);
+    }
+    return grid_axes;
+}
+
+inline std::vector<std::vector<double>> construct_grid_point_data_sets(const std::vector<std::vector<double>>& grid_point_data_vectors)
+{
+    std::vector<std::vector<double>> grid_point_data_sets;
+    grid_point_data_sets.reserve(grid_point_data_vectors.size());
+    for (const auto& grid_point_data_set : grid_point_data_vectors) {
+        grid_point_data_sets.emplace_back(
+            grid_point_data_set);
+    }
+    return grid_point_data_sets;
+}
+
 class GridImplementationFixture : public testing::Test {
   public:
-    std::vector<std::vector<double>> grid;
-    std::vector<std::vector<double>> data_sets;
     std::vector<double> target;
-    RegularGridInterpolatorImplementation interpolator;
+    RegularGridInterpolator interpolator;
 
-    GridImplementationFixture(std::vector<std::vector<double>> const& gridd, std::vector<std::vector<double>> const& datasetss):
-        grid(gridd),
-        data_sets(datasetss),
-        interpolator(construct_grid_axes(grid), construct_grid_point_data_sets(data_sets))
+    GridImplementationFixture(std::vector<GridAxis> const& gridd, std::vector<std::vector<double>> const& datasetss, InterpolationMethod intMethod):
+        interpolator(gridd, construct_grid_point_data_sets(datasetss), intMethod)
     {}
 
 };
@@ -30,7 +47,7 @@ class GridImplementationFixture : public testing::Test {
 class Grid2DImplementationFixture : public GridImplementationFixture {
   protected:
     Grid2DImplementationFixture():
-        GridImplementationFixture({{0, 10, 15}, {4, 6}},  {{6,
+        GridImplementationFixture({GridAxis({0, 10, 15}), GridAxis({4, 6})},  {{6,
                       3,   // 0
                       2,
                       8,   // 10
@@ -41,17 +58,17 @@ class Grid2DImplementationFixture : public GridImplementationFixture {
                       4,
                       16,  // 10
                       8,
-                      4}}) // 15
+                      4}}, // 15
+            InterpolationMethod::linear)
     {
         target = {12, 5};
-        interpolator.set_axis_extrapolation_method(0, ExtrapolationMethod::linear);
     }
 };
 
 class CubicImplementationFixture : public GridImplementationFixture {
   protected:
     CubicImplementationFixture():
-        GridImplementationFixture({{6, 10, 15, 20}, {2, 4, 6, 8}},
+        GridImplementationFixture({GridAxis({6, 10, 15, 20}), GridAxis({2, 4, 6, 8})},
             {{4,
               3,
               1.5,
@@ -84,10 +101,10 @@ class CubicImplementationFixture : public GridImplementationFixture {
               25,
               20,
               10,
-              5}}) // 20
+              5}}, // 20
+            InterpolationMethod::cubic)
     {
         target = {12, 4.5};
-        interpolator.set_axis_interpolation_method(0, InterpolationMethod::cubic);
     }
 };
 
@@ -95,13 +112,10 @@ class CubicImplementationFixture : public GridImplementationFixture {
 class Grid3DImplementationFixture : public GridImplementationFixture {
   protected:
     Grid3DImplementationFixture():
-        GridImplementationFixture({{-15, 0.2, 105}, {0, 10, 15}, {4, 6}},
-           {{6, 3, 2, 8, 4, 2, 3, 6, 13, 2, 0, 15, 3, 6, 13, 2, 0, 15}})
+        GridImplementationFixture({GridAxis({-15, 0.2, 105}), GridAxis({0, 10, 15}), GridAxis({4, 6})},
+           {{6, 3, 2, 8, 4, 2, 3, 6, 13, 2, 0, 15, 3, 6, 13, 2, 0, 15}}, InterpolationMethod::linear)
     {
         target = {26.9, 12, 5};
-        interpolator.set_axis_interpolation_method(0, InterpolationMethod::linear);
-        interpolator.set_axis_interpolation_method(1, InterpolationMethod::cubic);
-        interpolator.set_axis_interpolation_method(2, InterpolationMethod::linear);
     }
 };
 

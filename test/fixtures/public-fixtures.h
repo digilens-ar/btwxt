@@ -11,7 +11,6 @@
 #include <fmt/format.h>
 
 // btwxt
-#include "regular-grid-interpolator-implementation.h"
 #include <btwxt/btwxt.h>
 
 #define EXPECT_STDOUT(action, expected_stdout)                                                     \
@@ -33,13 +32,14 @@ class GridFixture : public testing::Test {
     std::vector<std::vector<double>> data_sets;
     std::vector<double> target;
     std::optional<RegularGridInterpolator> interpolator;
+    InterpolationMethod intMethod = InterpolationMethod::linear;
 
     GridFixture() = default;
 
     virtual void setup()
     {
         interpolator = RegularGridInterpolator(
-            grid, data_sets);
+            grid, data_sets, intMethod);
     }
 };
 
@@ -63,7 +63,30 @@ class Grid2DFixture : public GridFixture {
                       4}}; // 15
         target = {12, 5};
         setup();
-        interpolator.value().set_axis_extrapolation_method(0, ExtrapolationMethod::linear);
+    }
+};
+
+class Grid2DFixtureCubic : public GridFixture {
+  protected:
+    Grid2DFixtureCubic()
+    {
+        grid = {GridAxis({0, 10, 15}), GridAxis({4, 6})};
+        //         4  6
+        data_sets = {{6,
+                      3,   // 0
+                      2,
+                      8,   // 10
+                      4,
+                      2},  // 15
+                     {12,
+                      6,   // 0
+                      4,
+                      16,  // 10
+                      8,
+                      4}}; // 15
+        target = {12, 5};
+        intMethod = InterpolationMethod::cubic;
+        setup();
     }
 };
 
