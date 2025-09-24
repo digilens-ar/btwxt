@@ -7,7 +7,7 @@
 #include <gtest/gtest.h>
 
 // btwxt
-#include <btwxt/btwxt.h>
+#include <btwxt/btwxt.hpp>
 
 namespace Btwxt {
 

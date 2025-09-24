@@ -11,7 +11,7 @@
 #include <fmt/format.h>
 
 // btwxt
-#include <btwxt/btwxt.h>
+#include <btwxt/btwxt.hpp>
 
 #define EXPECT_STDOUT(action, expected_stdout)                                                     \
     {                                                                                              \

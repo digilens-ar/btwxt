@@ -13,4 +13,4 @@ target_link_libraries(btwxt_tests PRIVATE btwxt GTest::gtest GTest::gmock spdlog
 
 include(GoogleTest)
 
-gtest_discover_tests(${PROJECT_NAME}_tests TEST_PREFIX ${PROJECT_NAME}:)
+gtest_discover_tests(btwxt_tests TEST_PREFIX ${PROJECT_NAME}:)
